@@ -69,7 +69,7 @@
 #define ARM9CODE_OFF 0xb00+0x40
 #define ARM9CODE_SIZE 0x200-0x40
 #define ARM11CODE_OFF 0xd00
-#define ARM11CODE_SIZE 0x200
+#define ARM11CODE_SIZE 0x300
 
 #define HAXWORD 0x58584148
 
@@ -969,7 +969,12 @@ arm9_loadaddr:
 #ifndef ARM9HAX
 .space (_start + ARM11CODE_OFF) - .
 arm11code:
-sub sp, sp, #4
+add r1, pc, #1
+bx r1
+.thumb
+
+arm11code_start:
+sub sp, sp, #32
 /*ldr r4, =0x00558ad4
 ldr r0, [r4]
 svc 0x00000023 @ Close the "srv:" handle.
@@ -985,29 +990,29 @@ ldr r4, =srv_RegisterClient
 blx r4*/
 
 ldr r0, =0x14313890
-ldr r1, =0x46500
+ldr r1, =(0x46500*2)+0x10
 ldr r2, =0x13333337
 
 arm11_memclear:
-str r2, [r0], #4
+str r2, [r0]
+add r0, r0, #4
 add r2, r2, #4
-subs r1, r1, #4
+sub r1, r1, #4
 bne arm11_memclear
 
-add r0, r0, #0x10
+/*add r0, r0, #0x10
 ldr r1, =0x46500
 
 arm11_memclear2:
-str r2, [r0], #4
+str r2, [r0]
+add r0, r0, #4
 add r2, r2, #4
-subs r1, r1, #4
-bne arm11_memclear2
+sub r1, r1, #4
+bne arm11_memclear2*/
 
 ldr r2, =GSP_CMD8//flushdcache
 ldr r0, =0x14313890
-ldr r1, =0x46500
-lsl r1, r1, #1
-add r1, r1, #0x10
+ldr r1, =(0x46500*2)+0x10
 blx r2
 
 /*mov r0, sp @ Out handle
@@ -1064,23 +1069,119 @@ blne throw_fatalerr*/
 //ldr r0, [sp]
 //svc 0x00000023
 
-ldr r0, =0x14313890
+add r0, sp, #16 @ Out handle
+adr r1, arm11code_servname @ Service name ptr "fs:USER"
+mov r2, #7 @ Service name length
+mov r3, #0
+ldr r4, =srv_GetServiceHandle
+blx r4
+bl throw_fatalerr_check
+
+add r0, sp, #16
+bl fsuser_initialize
+bl throw_fatalerr_check
+
+mov r0, #1
+str r0, [sp, #0] @ openflags
+add r0, sp, #20
+str r0, [sp, #4] @ fileout handle*
+add r0, sp, #16 @ fsuser handle
+mov r1, #4 @ archiveid
+adr r2, arm11code_payloadpath
+adr r3, arm11code_payloadpath_end
+sub r3, r3, r2
+bl fsuser_openfiledirectly
+bl throw_fatalerr_check
+
+add r0, sp, #24
+str r0, [sp, #0] @ u32* total transfersize
+add r0, sp, #20 @ filehandle*
+mov r1, #0 @ u32 filepos
+ldr r2, =0x14700000 @ buf*
+ldr r3, =0x1000 @ size
+bl fsfile_read
+bl throw_fatalerr_check
+
+add r0, sp, #20 @ filehandle*
+bl fsfile_close
+
+ldr r0, [sp, #20]
+blx arm11code_svcCloseHandle
+
+ldr r0, [sp, #16]
+blx arm11code_svcCloseHandle
+
+ldr r2, =GSP_CMD8//flushdcache
+ldr r0, =0x14700000
+ldr r1, =0x1000
+blx r2
+
+mov r0, #0
+str r0, [sp, #0] @ height0
+str r0, [sp, #4] @ width1
+str r0, [sp, #8] @ height1
+mov r0, #8
+str r0, [sp, #12] @ flags
+ldr r0, =0x14700000 @ GPU DMA src addr
+ldr r1, =(TEXTGSPHEAPADDR+0x1000) @ GPU DMA dst addr
+ldr r2, [sp, #24]
+mov r3, #7
+add r2, r2, r3
+bic r2, r2, r3 @ size
+mov r3, #0 @ width0
+ldr r4, =GXLOWCMD_4
+blx r4
+
+ldr r0, =1000000000
+mov r1, #0
+blx arm11code_svcSleepThread
+
+ldr r4, =0x14701000
+mov r0, r4
+mov r3, r0
+mov r1, #0
+ldr r2, =0x1000
+
+arm11code_memclr:
+str r1, [r3]
+add r3, r3, #4
+sub r2, r2, #4
+bgt arm11code_memclr
+
+ldr r1, =THROWFATALERR
+str r1, [r0, #4]
+ldr r1, =GXLOWCMD_4
+str r1, [r0, #0x1c]
+ldr r1, =GSP_CMD8
+str r1, [r0, #0x20]
+
+ldr r1, =0x00101000
+blx r1
+
+/*ldr r0, =0x14313890
 ldr r1, =(0x46500*2 + 0x10)
-mvn r2, #0
+mov r2, #0
+mvn r2, r2
 
 arm11_memclear4:
-str r2, [r0], #4
-subs r1, r1, #4
+str r2, [r0]
+add r0, r0, #4
+sub r1, r1, #4
 bne arm11_memclear4
 
 ldr r2, =GSP_CMD8//flushdcache
 ldr r0, =0x14313890
 ldr r1, =(0x46500*2 + 0x10)
-blx r2
+blx r2*/
 
 arm11code_end:
 b arm11code_end
 .pool
+
+throw_fatalerr_check:
+cmp r0, #0
+bne throw_fatalerr
+bx lr
 
 throw_fatalerr:
 ldr r1, =THROWFATALERR
@@ -1123,7 +1224,7 @@ ldreq r0, [r4, #4]
 pop {r4, pc}
 .pool*/
 
-am_installtitlesfinish:
+/*am_installtitlesfinish:
 push {r4, r5, lr}
 mrc p15, 0, r4, cr13, cr0, 3
 add r4, r4, #0x80
@@ -1142,8 +1243,171 @@ ldr r0, [r0]
 svc 0x00000032
 cmp r0, #0
 ldreq r0, [r4, #4]
+pop {r4, r5, pc}*/
+
+fsuser_initialize:
+push {r0, r1, r2, r3, r4, r5, lr}
+blx arm11code_getcmdbuf
+mov r4, r0
+
+ldr r0, [sp, #0]
+
+ldr r5, =0x08010002
+str r5, [r4, #0]
+mov r1, #0x20
+str r1, [r4, #4]
+ldr r0, [r0]
+blx arm11code_svcSendSyncRequest
+cmp r0, #0
+bne fsuser_initialize_end
+ldr r0, [r4, #4]
+
+fsuser_initialize_end:
+add sp, sp, #16
+pop {r4, r5, pc}
+
+fsuser_openfiledirectly: @ r0=fsuser* handle, r1=archiveid, r2=lowpath bufptr*(utf16), r3=lowpath bufsize, sp0=openflags, sp4=file out handle*
+push {r0, r1, r2, r3, r4, r5, lr}
+blx arm11code_getcmdbuf
+mov r4, r0
+
+ldr r0, [sp, #0]
+ldr r1, [sp, #4]
+ldr r2, [sp, #8]
+ldr r3, [sp, #12]
+
+ldr r5, =0x08030204
+str r5, [r4, #0]
+mov r5, #0
+str r5, [r4, #4] @ transaction
+str r1, [r4, #8] @ archiveid
+mov r5, #1
+str r5, [r4, #12] @ Archive LowPath.Type
+str r5, [r4, #16] @ Archive LowPath.Size
+mov r5, #4
+str r5, [r4, #20] @ Archive LowPath.Type
+str r3, [r4, #24] @ Archive LowPath.Size
+ldr r5, [sp, #28]
+str r5, [r4, #28] @ Openflags
+mov r5, #0
+str r5, [r4, #32] @ Attributes
+ldr r5, =0x4802
+str r5, [r4, #36] @ archive lowpath translate hdr/ptr
+mov r5, sp
+str r5, [r4, #40]
+mov r5, #2
+lsl r3, r3, #14
+orr r3, r3, r5
+str r3, [r4, #44] @ file lowpath translate hdr/ptr
+str r2, [r4, #48]
+
+ldr r0, [r0]
+blx arm11code_svcSendSyncRequest
+cmp r0, #0
+bne fsuser_openfiledirectly_end
+
+ldr r0, [r4, #4]
+ldr r2, [sp, #32]
+ldr r1, [r4, #12]
+cmp r0, #0
+bne fsuser_openfiledirectly_end
+str r1, [r2]
+
+fsuser_openfiledirectly_end:
+add sp, sp, #16
 pop {r4, r5, pc}
 .pool
+
+fsfile_read: @ r0=filehandle*, r1=u32 filepos, r2=buf*, r3=size, sp0=u32* total transfersize
+push {r0, r1, r2, r3, r4, r5, lr}
+blx arm11code_getcmdbuf
+mov r4, r0
+
+ldr r0, [sp, #0]
+ldr r1, [sp, #4]
+ldr r2, [sp, #8]
+ldr r3, [sp, #12]
+
+ldr r5, =0x080200C2
+str r5, [r4, #0]
+str r1, [r4, #4] @ filepos
+mov r1, #0
+str r1, [r4, #8]
+str r3, [r4, #12] @ Size
+mov r5, #12
+lsl r3, r3, #4
+orr r3, r3, r5
+str r3, [r4, #16] @ file lowpath translate hdr/ptr
+str r2, [r4, #20]
+
+ldr r0, [r0]
+blx arm11code_svcSendSyncRequest
+cmp r0, #0
+bne fsfile_read_end
+ldr r0, [r4, #4]
+ldr r2, [sp, #28]
+ldr r1, [r4, #8]
+cmp r0, #0
+bne fsfile_read_end
+str r1, [r2]
+
+fsfile_read_end:
+add sp, sp, #16
+pop {r4, r5, pc}
+.pool
+
+fsfile_close: @ r0=filehandle*
+push {r0, r1, r2, r3, r4, r5, lr}
+blx arm11code_getcmdbuf
+mov r4, r0
+
+ldr r0, [sp, #0]
+
+ldr r5, =0x08080000
+str r5, [r4, #0]
+
+ldr r0, [r0]
+blx arm11code_svcSendSyncRequest
+cmp r0, #0
+bne fsfile_close_end
+ldr r0, [r4, #4]
+
+fsfile_close_end:
+add sp, sp, #16
+pop {r4, r5, pc}
+.pool
+
+.arm
+
+.type arm11code_getcmdbuf, %function
+arm11code_getcmdbuf:
+mrc p15, 0, r0, cr13, cr0, 3
+add r0, r0, #0x80
+bx lr
+
+.type arm11code_svcSendSyncRequest, %function
+arm11code_svcSendSyncRequest:
+svc 0x32
+bx lr
+
+.type arm11code_svcCloseHandle, %function
+arm11code_svcCloseHandle:
+svc 0x23
+bx lr
+
+.type arm11code_svcSleepThread, %function
+arm11code_svcSleepThread:
+svc 0x0a
+bx lr
+
+arm11code_servname:
+.string "fs:USER"
+.align 2
+
+arm11code_payloadpath:
+.string16 "/payload.bin"
+.align 2
+arm11code_payloadpath_end:
 
 .space (_start + ARM11CODE_OFF + ARM11CODE_SIZE) - . @ ARM11 code section end.
 #endif
