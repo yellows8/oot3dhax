@@ -75,7 +75,7 @@
 
 #if EXECHAX==2
 //#define REPLACE_FSREG_ACCESSCONTROL 1
-#define REPLACE_SRVACCESSCONTROL
+//#define REPLACE_SRVACCESSCONTROL
 #endif
 
 #if EXECHAX==0 || EXECHAX==3
@@ -1026,7 +1026,7 @@ bl nss_launchtitle
 cmp r0, #0
 blne throw_fatalerr*/
 
-mov r0, sp @ Out handle
+/*mov r0, sp @ Out handle
 ldr r1, =(SAVEADR+SRVACCESS_OFF + 0xb*8) @ Service name ptr "am:u"
 mov r2, #4 @ Service name length
 mov r3, #0
@@ -1048,7 +1048,7 @@ add r2, sp, #4
 mov r3, #1
 bl am_installtitlesfinish
 cmp r0, #0
-blne throw_fatalerr
+blne throw_fatalerr*/
 
 /*mov r0, sp
 //ldr r1, =0x4B464445
@@ -1061,8 +1061,8 @@ bl nss_launchapplicationfirm
 cmp r0, #0
 blne throw_fatalerr*/
 
-ldr r0, [sp]
-svc 0x00000023
+//ldr r0, [sp]
+//svc 0x00000023
 
 ldr r0, =0x14313890
 ldr r1, =(0x46500*2 + 0x10)
