@@ -1154,6 +1154,8 @@ ldr r1, =GXLOWCMD_4
 str r1, [r0, #0x1c]
 ldr r1, =GSP_CMD8
 str r1, [r0, #0x20]
+mov r1, #1
+str r1, [r0, #0x48]
 
 ldr r1, =0x00101000
 blx r1
