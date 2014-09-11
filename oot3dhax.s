@@ -1069,6 +1069,11 @@ blne throw_fatalerr*/
 //ldr r0, [sp]
 //svc 0x00000023
 
+/*ldr r0, =0x30e1e4
+blx r0
+mov r1, #0
+strb r1, [r0, #15] @ Terminate the DSP thread.*/
+
 add r0, sp, #16 @ Out handle
 adr r1, arm11code_servname @ Service name ptr "fs:USER"
 mov r2, #7 @ Service name length
@@ -1156,6 +1161,9 @@ ldr r1, =GSP_CMD8
 str r1, [r0, #0x20]
 mov r1, #1
 str r1, [r0, #0x48]
+
+/*ldr r1, =0x10000000
+mov sp, r1*/
 
 ldr r1, =0x00101000
 blx r1
