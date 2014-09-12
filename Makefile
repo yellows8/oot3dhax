@@ -9,7 +9,7 @@ ifeq ($(strip $(SAVECMD)),)
 endif
 
 ifeq ($(strip $(EXECHAX)),)
-	EXECHAX	:=	0
+$(error "EXECHAX not set.")
 endif
 
 ifeq ($(strip $(SD)),)
@@ -21,7 +21,7 @@ ifeq ($(SD),1)
 endif
 
 ifeq ($(strip $(FWVER)),)
-	FWVER	:=	0x1F
+$(error "FWVER not set.")
 endif
 
 SAVETOOL_OPT	:= 
