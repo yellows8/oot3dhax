@@ -18,6 +18,8 @@
 #define ADDSHIFTVAL_BLXR3 0x3201dc //r4 = r0 + r1<<2. classptr = *(r5+0x38). Calls vtable funcptr +16 with r3 for the funcptr, r2=*r4, r1=<ptr loaded from pool>
 #define SLEEP_THREAD 0x30e604
 
+#define GSPGPU_HANDLEADR 0x00558aac
+
 #define CODE_ALIGNEDSIZE 0x45b000
 
 #if FWVER < 0x25
@@ -990,7 +992,7 @@ ldr r4, =srv_RegisterClient
 blx r4*/
 
 ldr r0, =0x14313890
-ldr r1, =(0x46500*2)+0x10
+ldr r1, =0x46500
 ldr r2, =0x13333337
 
 arm11_memclear:
@@ -999,6 +1001,16 @@ add r0, r0, #4
 add r2, r2, #4
 sub r1, r1, #4
 bne arm11_memclear
+
+ldr r1, =0x46500
+add r0, r0, #0x10
+
+arm11_memclear2:
+str r2, [r0]
+add r0, r0, #4
+add r2, r2, #4
+sub r1, r1, #4
+bne arm11_memclear2
 
 /*add r0, r0, #0x10
 ldr r1, =0x46500
@@ -1141,8 +1153,8 @@ ldr r0, =1000000000
 mov r1, #0
 blx arm11code_svcSleepThread
 
-ldr r4, =0x14701000
-mov r0, r4
+ldr r5, =0x14701000
+mov r0, r5
 mov r3, r0
 mov r1, #0
 ldr r2, =0x1000
@@ -1159,12 +1171,13 @@ ldr r1, =GXLOWCMD_4
 str r1, [r0, #0x1c]
 ldr r1, =GSP_CMD8
 str r1, [r0, #0x20]
-mov r1, #1
+mov r1, #0x5 @ flags
 str r1, [r0, #0x48]
+ldr r1, =GSPGPU_HANDLEADR
+str r1, [r0, #0x50]
 
-/*ldr r1, =0x10000000
-mov sp, r1*/
-
+arm11code_callpayload:
+mov r0, r5
 ldr r1, =0x00101000
 blx r1
 
@@ -1389,10 +1402,18 @@ pop {r4, r5, pc}
 
 .arm
 
+armcrashff:
+.word 0xffffffff
+
 .type arm11code_getcmdbuf, %function
 arm11code_getcmdbuf:
 mrc p15, 0, r0, cr13, cr0, 3
 add r0, r0, #0x80
+bx lr
+
+.type arm11code_svcControlMemory, %function
+arm11code_svcControlMemory:
+svc 0x01
 bx lr
 
 .type arm11code_svcSendSyncRequest, %function
