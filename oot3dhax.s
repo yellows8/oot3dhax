@@ -1115,7 +1115,8 @@ str r0, [sp, #0] @ u32* total transfersize
 add r0, sp, #20 @ filehandle*
 mov r1, #0 @ u32 filepos
 ldr r2, =0x14700000 @ buf*
-ldr r3, =0x1000 @ size
+ldr r6, =0x1100 @ size
+mov r3, r6
 bl fsfile_read
 bl throw_fatalerr_check
 
@@ -1130,7 +1131,7 @@ blx arm11code_svcCloseHandle
 
 ldr r2, =GSP_CMD8//flushdcache
 ldr r0, =0x14700000
-ldr r1, =0x1000
+mov r1, r6
 blx r2
 
 mov r0, #0
@@ -1171,10 +1172,10 @@ ldr r1, =GXLOWCMD_4
 str r1, [r0, #0x1c]
 ldr r1, =GSP_CMD8
 str r1, [r0, #0x20]
-mov r1, #0x5 @ flags
+mov r1, #0xd @ flags
 str r1, [r0, #0x48]
 ldr r1, =GSPGPU_HANDLEADR
-str r1, [r0, #0x50]
+str r1, [r0, #0x58]
 
 arm11code_callpayload:
 mov r0, r5
