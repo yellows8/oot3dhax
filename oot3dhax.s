@@ -1110,13 +1110,19 @@ sub r3, r3, r2
 bl fsuser_openfiledirectly
 bl throw_fatalerr_check
 
+add r0, sp, #20 @ filehandle*
+add r1, sp, #0 @ u32* outsize
+bl fsfile_getsize
+bl throw_fatalerr_check
+
+ldr r6, [sp, #0]
+
 add r0, sp, #24
 str r0, [sp, #0] @ u32* total transfersize
 add r0, sp, #20 @ filehandle*
 mov r1, #0 @ u32 filepos
 ldr r2, =0x14700000 @ buf*
-ldr r6, =0x1100 @ size
-mov r3, r6
+mov r3, r6 @ size
 bl fsfile_read
 bl throw_fatalerr_check
 
@@ -1128,6 +1134,10 @@ blx arm11code_svcCloseHandle
 
 ldr r0, [sp, #16]
 blx arm11code_svcCloseHandle
+
+mov r0, #7
+add r6, r6, r0
+bic r6, r6, r0 @ 8-byte alignment
 
 ldr r2, =GSP_CMD8//flushdcache
 ldr r0, =0x14700000
@@ -1142,10 +1152,7 @@ mov r0, #8
 str r0, [sp, #12] @ flags
 ldr r0, =0x14700000 @ GPU DMA src addr
 ldr r1, =(TEXTGSPHEAPADDR+0x1000) @ GPU DMA dst addr
-ldr r2, [sp, #24]
-mov r3, #7
-add r2, r2, r3
-bic r2, r2, r3 @ size
+mov r2, r6 @ size
 mov r3, #0 @ width0
 ldr r4, =GXLOWCMD_4
 blx r4
@@ -1397,6 +1404,33 @@ bne fsfile_close_end
 ldr r0, [r4, #4]
 
 fsfile_close_end:
+add sp, sp, #16
+pop {r4, r5, pc}
+.pool
+
+fsfile_getsize: @ r0=filehandle*, r1=u32* outsize
+push {r0, r1, r2, r3, r4, r5, lr}
+blx arm11code_getcmdbuf
+mov r4, r0
+
+ldr r0, [sp, #0]
+
+ldr r5, =0x08040000
+str r5, [r4, #0]
+
+ldr r0, [r0]
+blx arm11code_svcSendSyncRequest
+cmp r0, #0
+bne fsfile_getsize_end
+ldr r0, [r4, #4]
+cmp r0, #0
+bne fsfile_getsize_end
+
+ldr r1, [r4, #8]
+ldr r2, [sp, #4]
+str r1, [r2]
+
+fsfile_getsize_end:
 add sp, sp, #16
 pop {r4, r5, pc}
 .pool
