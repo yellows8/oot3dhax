@@ -1,4 +1,4 @@
-This is a 3DS savedata exploit for "The Legend of Zelda: Ocarina of Time 3D".  
+This is a 3DS savedata exploit for "The Legend of Zelda: Ocarina of Time 3D". The following regions are supported: USA, EUR, and JPN.  
   
 There's two build methods: build the savefiles + generate a save with 3dsfuse then update the AESMAC with ctr-savetool, or build the savefiles then write those to the savedata FS via other methods, such as ctrclient-yls8.  
 

