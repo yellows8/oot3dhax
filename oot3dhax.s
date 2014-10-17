@@ -1216,6 +1216,7 @@ str r0, [sp, #12] @ flags
 ldr r0, =0x14700000 @ GPU DMA src addr
 
 ldr r1, =(APPMEMSIZE + (0x14000000 - TEXT_APPMEM_OFFSET))
+mov r7, r1
 ldr r2, =0x1000
 add r1, r1, r2
 
@@ -1250,6 +1251,7 @@ mov r1, #0xd @ flags
 str r1, [r0, #0x48]
 ldr r1, =GSPGPU_HANDLEADR
 str r1, [r0, #0x58]
+str r7, [r0, #0x60]
 
 arm11code_callpayload:
 mov r0, r5
