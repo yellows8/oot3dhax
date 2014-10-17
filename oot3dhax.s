@@ -1039,6 +1039,9 @@ bx r1
 .thumb
 
 arm11code_start:
+ldr r0, =(0x10000000 - 0x3800)
+mov sp, r0
+
 sub sp, sp, #32
 /*ldr r4, =0x00558ad4
 ldr r0, [r4]
@@ -1251,7 +1254,12 @@ mov r1, #0xd @ flags
 str r1, [r0, #0x48]
 ldr r1, =GSPGPU_HANDLEADR
 str r1, [r0, #0x58]
+ldr r2, =0x2400
+add r7, r7, r2
 str r7, [r0, #0x60]
+ldr r1, =0x00100000
+add r1, r1, r2
+str r1, [r0, #0x64]
 
 arm11code_callpayload:
 mov r0, r5
