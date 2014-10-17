@@ -1254,7 +1254,7 @@ mov r1, #0xd @ flags
 str r1, [r0, #0x48]
 ldr r1, =GSPGPU_HANDLEADR
 str r1, [r0, #0x58]
-ldr r2, =0x2400
+ldr r2, =0x3000
 add r7, r7, r2
 str r7, [r0, #0x60]
 ldr r1, =0x00100000
