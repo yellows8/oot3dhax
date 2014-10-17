@@ -48,6 +48,12 @@
 #define TEXT_APPMEM_OFFSET (CODE_ALIGNEDSIZE - 0x5B000)
 #endif
 
+#if NEW3DS==0
+#define APPMEMSIZE 0x04000000
+#else
+#define APPMEMSIZE 0x07C00000
+#endif
+
 #if REGION==1 //USA
 #define SENDCMDADR 0x4360a0 //Writes r0 to r4+0, then copies 0x80-bytes from r1 to r4+4. Then uses svcSendSyncRequest with handle *r5.
 #define GXLOWCMD_0 0x49398c
@@ -729,7 +735,7 @@ SENDCMD SAVEADR+0x1040, 0x040103C0, SAVEADR+0x1180 @ Register this process with 
 .word 0 @ r9
 .word 0 @ sl
 
-.word REGPOPADR //ldr r1, [r1, #4] ; add r1, r1, r2, lsl #3 ; str r1, [r0]
+/*.word REGPOPADR //ldr r1, [r1, #4] ; add r1, r1, r2, lsl #3 ; str r1, [r0]
 .word (gxcpy_dstaddr_ropword-_start) + SAVEADR @ r0
 .word 0x1FF80040-4 @ r1
 .word (0x14000000 - TEXT_APPMEM_OFFSET)>>3 @ r2
@@ -744,12 +750,12 @@ SENDCMD SAVEADR+0x1040, 0x040103C0, SAVEADR+0x1180 @ Register this process with 
 .word 0, 0
 .word 0
 .word 0
-.word 0, 0, 0, 0, 0
+.word 0, 0, 0, 0, 0*/
 
 .word REGPOPADR//This code exec method uses GX command4 to copy arm11code using GPU DMA, to .text.
 .word 0x14700000 @ r0, GPU DMA src addr
 gxcpy_dstaddr_ropword:
-.word 0 @ r1, GPU DMA dst addr. Overwritten by the above ROP.
+.word APPMEMSIZE + (0x14000000 - TEXT_APPMEM_OFFSET) @ r1, GPU DMA dst addr.
 .word ARM11CODE_SIZE @ r2, size
 .word 0 @ r3, width0
 .word 0x0f @ r4
@@ -1209,12 +1215,9 @@ mov r0, #8
 str r0, [sp, #12] @ flags
 ldr r0, =0x14700000 @ GPU DMA src addr
 
-ldr r1, =0x1FF80040 @ APPMEMALLOC
-ldr r1, [r1]
-ldr r2, =TEXT_APPMEM_OFFSET
-sub r1, r1, r2
-ldr r2, =0x14001000
-add r1, r1, r2 @ GPU DMA dst addr
+ldr r1, =(APPMEMSIZE + (0x14000000 - TEXT_APPMEM_OFFSET))
+ldr r2, =0x1000
+add r1, r1, r2
 
 mov r2, r6 @ size
 mov r3, #0 @ width0

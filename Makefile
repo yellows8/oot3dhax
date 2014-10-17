@@ -24,6 +24,10 @@ ifeq ($(strip $(FWVER)),)
 $(error "FWVER not set.")
 endif
 
+ifeq ($(strip $(NEW3DS)),)
+$(error "NEW3DS not set.")
+endif
+
 SAVETOOL_OPT	:= 
 
 ifneq ($(strip $(OUTPATH)),)
@@ -65,11 +69,11 @@ save_jpn.bin: oot3dhax_jpn.elf
 	./oot3d_savetool save_jpn.bin $(SAVETOOL_OPT)
 
 oot3dhax_usa.elf:	oot3dhax.s
-	$(CC) -x assembler-with-cpp -nostartfiles -nostdlib -DREGION=1 -DEXECHAX=$(EXECHAX) -DFWVER=$(FWVER) $< -o oot3dhax_usa.elf
+	$(CC) -x assembler-with-cpp -nostartfiles -nostdlib -DREGION=1 -DEXECHAX=$(EXECHAX) -DFWVER=$(FWVER) -DNEW3DS=$(NEW3DS) $< -o oot3dhax_usa.elf
 
 oot3dhax_eur.elf:	oot3dhax.s
-	$(CC) -x assembler-with-cpp -nostartfiles -nostdlib -DREGION=2 -DEXECHAX=$(EXECHAX) -DFWVER=$(FWVER) $< -o oot3dhax_eur.elf
+	$(CC) -x assembler-with-cpp -nostartfiles -nostdlib -DREGION=2 -DEXECHAX=$(EXECHAX) -DFWVER=$(FWVER) -DNEW3DS=$(NEW3DS) $< -o oot3dhax_eur.elf
 
 oot3dhax_jpn.elf:	oot3dhax.s
-	$(CC) -x assembler-with-cpp -nostartfiles -nostdlib -DREGION=0 -DEXECHAX=$(EXECHAX) -DFWVER=$(FWVER) $< -o oot3dhax_jpn.elf
+	$(CC) -x assembler-with-cpp -nostartfiles -nostdlib -DREGION=0 -DEXECHAX=$(EXECHAX) -DFWVER=$(FWVER) -DNEW3DS=$(NEW3DS) $< -o oot3dhax_jpn.elf
 
