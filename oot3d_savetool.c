@@ -197,7 +197,7 @@ int main(int argc, char **argv)
 	printf("\n");
 
 	printf("Writing updated savegame...\n");
-	f = fopen(outpath, "r+");
+	f = fopen(outpath, "r+b");
 	if(f==NULL)
 	{
 		printf("Failed to open savegame for writing.\n");
