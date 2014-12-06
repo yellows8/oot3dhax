@@ -1254,11 +1254,7 @@ mov r1, #0xd @ flags
 str r1, [r0, #0x48]
 ldr r1, =GSPGPU_HANDLEADR
 str r1, [r0, #0x58]
-ldr r2, =0x3000
-add r7, r7, r2
-str r7, [r0, #0x60]
-ldr r1, =0x00100000
-add r1, r1, r2
+ldr r1, =0x08010000
 str r1, [r0, #0x64]
 
 arm11code_callpayload:
