@@ -1,4 +1,4 @@
-This is a 3DS savedata exploit for "The Legend of Zelda: Ocarina of Time 3D". The following regions are supported: USA, EUR, and JPN.  
+This is a 3DS savedata exploit for "The Legend of Zelda: Ocarina of Time 3D". Hence the datetime displayed for the save-slot, this haxx has existed since October 2012. The following regions are supported: USA, EUR, and JPN.  
 
 Haxx usage: 1) goto the save-slot select screen 2) select haxx save-saveslot 3) begin loading the save-slot 4) wait for the game to finish loading 5) either press A, do anything triggering display of dialogs, or press any button on the touch-screen.  
   
