@@ -1250,7 +1250,7 @@ ldr r1, =GXLOWCMD_4
 str r1, [r0, #0x1c]
 ldr r1, =GSP_CMD8
 str r1, [r0, #0x20]
-mov r1, #0xd @ flags
+mov r1, #0x8d @ flags
 str r1, [r0, #0x48]
 ldr r1, =GSPGPU_HANDLEADR
 str r1, [r0, #0x58]
