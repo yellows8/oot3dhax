@@ -2,7 +2,7 @@ This is a 3DS savedata exploit for "The Legend of Zelda: Ocarina of Time 3D". He
 
 Haxx usage: 1) goto the save-slot select screen 2) select haxx save-saveslot 3) begin loading the save-slot 4) wait for the game to finish loading 5) either press A, do anything triggering display of dialogs, or press any button on the touch-screen.  
   
-There's two build methods: build the savefiles + generate a save with 3dsfuse then update the AESMAC with ctr-savetool, or build the savefiles then write those to the savedata FS via other methods, such as ctrclient-yls8.  
+There's two build methods: build the savefiles + generate a save with 3dsfuse then update the AESMAC, or build the savefiles then write those to the savedata FS via other methods, such as ctrclient-yls8.  
 
 Make command: "make {savefiles} EXECHAX={value} FWVER={value} NEW3DS={value}" EXECHAX=2 for GSP arm11code-loading haxx. FWVER should be any value >=0x25 for system-version >=v5.0 with EXECHAX=2, value 0x1F otherwise. NEW3DS=1 on New3DS, 0 otherwise.  
 Build oot3d_savetool with the following: gcc -o oot3d_savetool oot3d_savetool.c  

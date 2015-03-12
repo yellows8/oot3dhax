@@ -125,16 +125,11 @@
 
 #define HAXWORD 0x58584148
 
-#if EXECHAX==2
-//#define REPLACE_FSREG_ACCESSCONTROL 1
-//#define REPLACE_SRVACCESSCONTROL
-#endif
-
 #if EXECHAX==0 || EXECHAX==3
 #define ARM9HAX 1
 #endif
 
-#if ARM9HAX==1 || REPLACE_FSREG_ACCESSCONTROL==1
+#if ARM9HAX==1
 #define REPLACE_SRVACCESSCONTROL
 #endif
 
@@ -170,7 +165,7 @@
 #define HEAPHAX_HEAPBUF HEAPHAX_HEAPCTX-0x2800//Addr of the ARM9 heap buffer where the input data for amnet cmd 0x08190108 is copied to.
 #define DIFF_FILEREAD_FUNCPTR 0x080952c0+8//This is the addr of the funcptr used by the DIFF verification code for reading data, via a class vtable.
 #define DIFF_FILEREAD_FUNCADR 0x08065275//The original func addr from the above funcptr, before it's overwritten.
-#define HEAPHAX_INPUTBUF 0x08000000//SAVESLOTSADR
+#define HEAPHAX_INPUTBUF 0x08000000
 #define HEAPHAX_BUFSIZE 0x2800
 #define HEAPCHUNK_SAVEOFF 0xf80
 #define HEAPOFF_ARM9CODE 0x4
@@ -291,28 +286,6 @@ _start:
 .word STACKMEMCPYADR @ After copying the data to stack, this func calls L_3508b8, see below.
 
 .space (_start + 0x180) - .
-
-/*#ifdef START_ROPTHREAD
-.word 0 @ r0
-.word 0 @ r1
-.word 0 @ r2
-.word 0 @ r3
-.word 0x0f @ r4
-.word 0 @ r5
-.word THREADINIT_LOCALSTORAGE @ r6
-.word 0 @ fp
-.word 0 @ ip
-.word BLXR6
-
-.word 0, 0 @ d8
-.word 0 @ r4
-.word 0 @ r5
-.word 0 @ r6
-.word 0 @ r7
-.word 0 @ r8
-.word 0 @ r9
-.word 0 @ sl
-#endif*/
 
 .word 0 @ r0
 .word 0 @ r1
@@ -640,59 +613,6 @@ SENDCMD SAVEADR+0x1040, 0x00190040, SAVEADR+0x1200 @ ReloadDBS
 #endif
 
 #if EXECHAX==2
-
-#if REPLACE_FSREG_ACCESSCONTROL==1
-.word REGPOPADR
-.word SAVEADR+0x1180 @ r0, Dst
-.word SAVEADR+0x1080 @ r1, Src
-.word 0x4 @ r2
-.word 0 @ r3
-.word 0x0f @ r4
-.word 0 @ r5
-.word MEMCPY @ r6
-.word 0 @ fp
-.word 0 @ ip
-.word BLXR6
-
-.word 0, 0 @ d8
-.word 0 @ r4
-.word 0 @ r5
-.word 0 @ r6
-.word 0 @ r7
-.word 0 @ r8
-.word 0 @ r9
-.word 0 @ sl
-
-.word REGPOPADR
-.word SAVEADR+0x1040 @ r0, Out handle
-.word SAVEADR+SRVACCESS_OFF + 0x8*8 @ r1, Service name ptr "fs:REG".
-.word 6 @ r2, Service name length
-.word 0 @ r3
-.word 0x0f @ r4
-.word 0 @ r5
-.word srv_GetServiceHandle @ r6
-.word 0 @ fp
-.word 0 @ ip
-.word BLXR6
-
-.word 0, 0 @ d8
-.word 0 @ r4
-.word 0 @ r5
-.word 0 @ r6
-.word 0 @ r7
-.word 0 @ r8
-.word 0 @ r9
-.word 0 @ sl
-
-.word COND_THROWFATALERR
-.word 0, 0, 0, 0, 0, 0, 0
-
-SENDCMD SAVEADR+0x1040, 0x04020040, SAVEADR+0x1180 @ Unregister this process from fs:REG.
-SENDCMD SAVEADR+0x1040, 0x040103C0, SAVEADR+0x1180 @ Register this process with fs:REG.
-
-.word THROWFATALERR
-#endif
-
 .word REGPOPADR
 .word 0x14700000 @ r0, Dst
 .word SAVEADR+ARM11CODE_OFF @ r1, Src ARM11 code
@@ -765,7 +685,7 @@ gxcpy_dstaddr_ropword:
 .word 0 @ ip
 .word BLXR6
 
-/*.word REGPOPADR//This code exec method uses GX command0 to DMA arm11code from the savegame, to .text, via svcStartInterProcessDma(). This isn't usable with FW1F since this causes GSP module to terminate, it's unknown whether this was exploitable on older NATIVE_FIRM versions.
+/*.word REGPOPADR//This code exec method uses GX command0 to DMA arm11code from the savegame, to .text, via svcStartInterProcessDma(). It's unknown whether the ARM11-kernel ever allowed this at all.
 .word 0x00100000 @ r0, DMA dst addr 0x00100000 0x14313890 0x30dbd4
 .word 0x1f300000 @ r1, DMA src addr SAVEADR+0x300 0x1f300000
 .word 0x46500*2 + 0x10 @ r2, size 0x200
@@ -932,7 +852,7 @@ pop {r0, r1, r2, r3, r4, r5, r6, r7}
 add sp, sp, #4
 
 #if EXECHAX==3
-ldr r7, =DIFF_FILEREAD_FUNCADR//for FW1F
+ldr r7, =DIFF_FILEREAD_FUNCADR
 bx r7
 #endif
 
@@ -1043,21 +963,8 @@ ldr r0, =(0x10000000 - 0x3800)
 mov sp, r0
 
 sub sp, sp, #32
-/*ldr r4, =0x00558ad4
-ldr r0, [r4]
-svc 0x00000023 @ Close the "srv:" handle.
-mov r0, #0
-str r0, [r4]
 
-ldr r0, =0x00558ad4 @ Output handle located where the "srv:" handle was stored.
-ldr r1, =0x4e7485 @ Port name, "srv:pm"
-ldr r4, =svcConnectToPort
-blx r4
-
-ldr r4, =srv_RegisterClient
-blx r4*/
-
-ldr r0, =0x14313890
+ldr r0, =0x14313890 @ Clear the main-screen framebuffers for framebuf A. http://3dbrew.org/wiki/GPU_Registers
 ldr r1, =0x46500
 ldr r2, =0x13333337
 
@@ -1078,79 +985,10 @@ add r2, r2, #4
 sub r1, r1, #4
 bne arm11_memclear2
 
-/*add r0, r0, #0x10
-ldr r1, =0x46500
-
-arm11_memclear2:
-str r2, [r0]
-add r0, r0, #4
-add r2, r2, #4
-sub r1, r1, #4
-bne arm11_memclear2*/
-
 ldr r2, =GSP_CMD8//flushdcache
 ldr r0, =0x14313890
 ldr r1, =(0x46500*2)+0x10
 blx r2
-
-/*mov r0, sp @ Out handle
-ldr r1, =(SAVEADR+SRVACCESS_OFF + 0xa*8) @ Service name ptr "ns:s".
-mov r2, #4 @ Service name length
-mov r3, #0
-ldr r4, =srv_GetServiceHandle
-blx r4
-cmp r0, #0
-blne throw_fatalerr
-
-mov r0, sp
-ldr r1, =0x00040030
-ldr r2, =0x00009402
-bl nss_launchtitle
-cmp r0, #0
-blne throw_fatalerr*/
-
-/*mov r0, sp @ Out handle
-ldr r1, =(SAVEADR+SRVACCESS_OFF + 0xb*8) @ Service name ptr "am:u"
-mov r2, #4 @ Service name length
-mov r3, #0
-ldr r4, =srv_GetServiceHandle
-blx r4
-cmp r0, #0
-blne throw_fatalerr
-
-ldr r0, =0x0000CE02
-ldr r1, =0x00040030
-//ldr r0, =0x00021900
-//ldr r1, =0x00040010
-str r0, [sp, #4]
-str r1, [sp, #8]
-
-mov r0, sp
-mov r1, #0
-add r2, sp, #4
-mov r3, #1
-bl am_installtitlesfinish
-cmp r0, #0
-blne throw_fatalerr*/
-
-/*mov r0, sp
-//ldr r1, =0x4B464445
-//ldr r2, =0x00048004
-//mov r3, #1
-ldr r1, =0x102
-ldr r2, =0x00040138
-mov r3, #2
-bl nss_launchapplicationfirm
-cmp r0, #0
-blne throw_fatalerr*/
-
-//ldr r0, [sp]
-//svc 0x00000023
-
-/*ldr r0, =0x30e1e4
-blx r0
-mov r1, #0
-strb r1, [r0, #15] @ Terminate the DSP thread.*/
 
 add r0, sp, #16 @ Out handle
 adr r1, arm11code_servname @ Service name ptr "fs:USER"
@@ -1262,22 +1100,6 @@ mov r0, r5
 ldr r1, =0x00101000
 blx r1
 
-/*ldr r0, =0x14313890
-ldr r1, =(0x46500*2 + 0x10)
-mov r2, #0
-mvn r2, r2
-
-arm11_memclear4:
-str r2, [r0]
-add r0, r0, #4
-sub r1, r1, #4
-bne arm11_memclear4
-
-ldr r2, =GSP_CMD8//flushdcache
-ldr r0, =0x14313890
-ldr r1, =(0x46500*2 + 0x10)
-blx r2*/
-
 arm11code_end:
 b arm11code_end
 .pool
@@ -1291,63 +1113,6 @@ throw_fatalerr:
 ldr r1, =THROWFATALERR
 bx r1
 .pool
-
-/*nss_launchtitle:
-push {r4, lr}
-mrc p15, 0, r4, cr13, cr0, 3
-add r4, r4, #0x80
-
-ldr r3, =0x000200C0
-str r3, [r4, #0]
-mov r3, r2
-mov r2, r1
-strd r2, [r4, #4]
-mov r1, #2
-str r1, [r4, #12]
-ldr r0, [r0]
-svc 0x00000032
-cmp r0, #0
-ldreq r0, [r4, #4]
-pop {r4, pc}
-.pool*/
-
-/*nss_launchapplicationfirm:
-push {r4, lr}
-mrc p15, 0, r4, cr13, cr0, 3
-add r4, r4, #0x80
-str r3, [r4, #12]
-ldr r3, =0x000500C0
-str r3, [r4]
-str r1, [r4, #4]
-str r2, [r4, #8]
-
-ldr r0, [r0]
-svc 0x00000032
-cmp r0, #0
-ldreq r0, [r4, #4]
-pop {r4, pc}
-.pool*/
-
-/*am_installtitlesfinish:
-push {r4, r5, lr}
-mrc p15, 0, r4, cr13, cr0, 3
-add r4, r4, #0x80
-
-ldr r5, =0x040E00C2
-str r5, [r4, #0]
-strb r1, [r4, #4]
-str r3, [r4, #8]
-lsl r3, r3, #7
-orr r3, r3, #10
-str r3, [r4, #16]
-str r2, [r4, #20]
-mov r1, #0
-strb r1, [r4, #12]
-ldr r0, [r0]
-svc 0x00000032
-cmp r0, #0
-ldreq r0, [r4, #4]
-pop {r4, r5, pc}*/
 
 fsuser_initialize:
 push {r0, r1, r2, r3, r4, r5, lr}
@@ -1636,19 +1401,6 @@ arm11code_payloadpath_end:
 .word SAVEADR+RSAINFO_OFF @ Ctx
 .word (PSPS_SIGBUFSIZE<<4) | 10
 .word 0x08000000 @ Signature
-#endif
-
-#ifdef REPLACE_FSREG_ACCESSCONTROL
-.space (_start + 0x1180) - . @ cmd data for fs:REG
-.word 0 @ ProcessID
-.word 0x00033500, 0x00040000 @ titleID
-.word 0x00033500, 0x00040000 @ 0x10-byte buf: +0 = u64 programID
-.word 2 @ 0x10-byte buf: +8 = u8 mediatype
-.word 0 @ 0x10-byte buf: +12 = reserved
-.word 0, 0 @ exheader_storageinfo.extsavedataid
-.word 0, 0 @ exheader_storageinfo.systemsavedataid
-.word 0, 0 @ exheader_storageinfo.reserved
-.word 0x80, 0 @ exheader_storageinfo.accessinfo and otherattributes
 #endif
 
 #if EXECHAX==3
