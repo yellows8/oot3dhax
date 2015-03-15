@@ -1,6 +1,8 @@
-This is a 3DS savedata exploit for "The Legend of Zelda: Ocarina of Time 3D". Hence the datetime displayed for the save-slot, this haxx has existed since October 2012. The following regions are supported: USA, EUR, and JPN.  
+This is a 3DS savedata exploit for "The Legend of Zelda: Ocarina of Time 3D". Hence the datetime displayed for the save-slot, this haxx has existed since October 2012. The following regions are supported: USA, EUR, and JPN. Since the gamecard(there's only one "version" of the main CXI used for the gamecard) and eShop versions of the game are basically identical, the exploit can be used with both(if one can get the exploit savedata written to the save-image used by the target game version of course).  
 
 This savegame haxx is the same one referred to here: http://3dbrew.org/wiki/5.0.0-11  
+
+For details on the vuln/etc, see source and here: http://3dbrew.org/wiki/3DS_Userland_Flaws
 
 Haxx usage: 1) goto the save-slot select screen 2) select haxx save-saveslot 3) begin loading the save-slot 4) wait for the game to finish loading 5) either press A, do anything triggering display of dialogs, or press any button on the touch-screen(the VIEW button, the MAP button, and the buttons for the currently equipped items don't trigger it).  
   
