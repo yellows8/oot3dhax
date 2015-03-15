@@ -8,16 +8,20 @@ ifeq ($(strip $(SAVECMD)),)
 	SAVECMD	:=	
 endif
 
+ifeq ($(strip $(SAVECMD_E)),)
+	SAVECMD_E	:=	
+endif
+
+ifeq ($(strip $(SAVECMD_P)),)
+	SAVECMD_P	:=	
+endif
+
+ifeq ($(strip $(SAVECMD_J)),)
+	SAVECMD_J	:=	
+endif
+
 ifeq ($(strip $(EXECHAX)),)
 $(error "EXECHAX not set.")
-endif
-
-ifeq ($(strip $(SD)),)
-	SAVECMD	+=	--gamecard
-endif
-
-ifeq ($(SD),1)
-	SAVECMD	+=	--sdsave
 endif
 
 ifeq ($(strip $(FWVER)),)
@@ -30,26 +34,25 @@ ifneq ($(strip $(OUTPATH)),)
 	SAVETOOL_OPT	:= $(OUTPATH)/part_00/save00.bin
 endif
 
-ifeq ($(strip $(CARDID)),)
-	CARDID	:=	c2fe0090
-endif
+all:	savefiles
 
-all:	oot3dhax_E.sav oot3dhax_P.sav oot3dhax_J.sav
+saveimages:	oot3dhax_E.sav oot3dhax_P.sav oot3dhax_J.sav
+
 savefiles:	save_usa.bin save_eur.bin save_jpn.bin
 
 clean:
 	rm -f oot3dhax_usa.elf oot3dhax_eur.elf oot3dhax_jpn.elf save_usa.bin save_eur.bin save_jpn.bin oot3dhax_E.sav oot3dhax_P.sav oot3dhax_J.sav
 
 oot3dhax_E.sav: save_usa.bin
-	ctr-savetool --insave=$(OUTPATH)/clean.sav --genxorpad=$(OUTPATH)/xorpad.bin --genmac --writemac --keyY=04c546b165b23e0b$(CARDID)00000000 $(SAVECMD) --saveid=0004000000033500
+	$(SAVECMD) $(SAVECMD_E)
 	cp $(OUTPATH)/output.sav oot3dhax_E.sav
 
 oot3dhax_P.sav: save_eur.bin
-	ctr-savetool --insave=$(OUTPATH)/clean.sav --genxorpad=$(OUTPATH)/xorpad.bin --genmac --writemac --keyY=53c6617397623ea4$(CARDID)00000000 $(SAVECMD)
+	$(SAVECMD) $(SAVECMD_P)
 	cp $(OUTPATH)/output.sav oot3dhax_P.sav
 
 oot3dhax_J.sav: save_jpn.bin
-	ctr-savetool --insave=$(OUTPATH)/clean.sav --genxorpad=$(OUTPATH)/xorpad.bin --genmac --writemac --keyY=969461b9340ff444$(CARDID)00000000 $(SAVECMD)
+	$(SAVECMD) $(SAVECMD_J)
 	cp $(OUTPATH)/output.sav oot3dhax_J.sav
 
 save_usa.bin: oot3dhax_usa.elf
