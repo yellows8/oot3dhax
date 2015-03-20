@@ -113,7 +113,6 @@ void process_systemdat(unsigned char *buf)
 int main(int argc, char **argv)
 {
 	FILE *f;
-	int i;
 	unsigned short calc_crc=0, save_calc=0;
 	unsigned int crc_off = 0x14d8;
 	int updatesave = 0;
@@ -157,7 +156,7 @@ int main(int argc, char **argv)
 
 	f = fopen(argv[1], "rb");
 	if(f==NULL)return 0;
-	if(fread(&savegame, 1, filestat.st_size, f) != filestat.st_size)
+	if(fread(&savegame, 1, filestat.st_size, f) != (size_t)filestat.st_size)
 	{
 		printf("Read failed.\n");
 		fclose(f);
@@ -203,7 +202,7 @@ int main(int argc, char **argv)
 		printf("Failed to open savegame for writing.\n");
 		return 0;
 	}
-	if(fwrite(&savegame, 1, filestat.st_size, f) != filestat.st_size)
+	if(fwrite(&savegame, 1, filestat.st_size, f) != (size_t)filestat.st_size)
 	{
 		printf("Write failed.\n");
 		fclose(f);
