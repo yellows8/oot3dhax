@@ -1,78 +1,84 @@
 ifeq ($(strip $(DEVKITARM)),)
-$(error "Please set DEVKITARM in your environment. export DEVKITARM=<path to>devkitARM")
+	$(error "Please set DEVKITARM in your environment. export DEVKITARM=<path to>devkitARM")
+endif
+
+## ======================
+## Global variables
+## ======================
+
+SAVE_FILES	= oot3dhax_eur.bin oot3dhax_usa.bin oot3dhax_jpn.bin
+REGIONS		= 2 1 0
+ELF_FILES	= $(SAVE_FILES:.bin=.elf)
+
+## ======================
+## oot3d_savetool variables
+## TODO: Beautiful compilation with .o file.
+## ======================
+
+SAVETOOL_NAME	= oot3d_savetool
+ST_CFLAGS	= -W -Wall -Wextra -std=c99 -O3
+SAVETOOL_SRCS	= oot3d_savetool.c
+
+SAVETOOL_OPT	=
+
+## ======================
+## ELF build variables
+## ======================
+
+ELF_FLAGS	= -x assembler-with-cpp -nostartfiles -nostdlib -DREGION=$(DREGION) -DEXECHAX=$(EXECHAX) -DFWVER=$(FWVER)
+ELF_SRCS	= oot3dhax.s
+
+## ======================
+## BIN build variables
+## ======================
+
+BIN_FLAGS	= -O binary
+
+## ===================================================================
+## Targets
+## ===================================================================
+
+all: requirements
+	$(MAKE) DREGION=$(word 1,$(subst :, ,$(REGIONS))) $(word 1,$(subst :, ,$(SAVE_FILES)))
+	$(MAKE) DREGION=$(word 2,$(subst :, ,$(REGIONS))) $(word 2,$(subst :, ,$(SAVE_FILES)))
+	$(MAKE) DREGION=$(word 3,$(subst :, ,$(REGIONS))) $(word 3,$(subst :, ,$(SAVE_FILES)))
+
+## ======================
+## Check requirements
+## ======================
+
+requirements:
+ifndef EXECHAX
+	$(error "EXECHAX not set.")
+endif
+ifndef FWVER
+	$(error "FWVER not set.")
 endif
 
 include $(DEVKITARM)/base_rules
 
-ifeq ($(strip $(SAVECMD)),)
-	SAVECMD	:=	
-endif
+## ======================
+## Builds targets
+## ======================
 
-ifeq ($(strip $(SAVECMD_E)),)
-	SAVECMD_E	:=	
-endif
+%.bin: %.elf $(SAVETOOL_NAME)
+	$(OBJCOPY) $(BIN_FLAGS) $< $@
+	./$(SAVETOOL_NAME) $(SAVETOOL_OPT) $@
 
-ifeq ($(strip $(SAVECMD_P)),)
-	SAVECMD_P	:=	
-endif
+%.elf:
+	$(CC) $(ELF_FLAGS) $(ELF_SRCS) -o $@
 
-ifeq ($(strip $(SAVECMD_J)),)
-	SAVECMD_J	:=	
-endif
+$(SAVETOOL_NAME):
+	gcc -o $@ $(SAVETOOL_SRCS) $(ST_CFLAGS)
 
-ifeq ($(strip $(EXECHAX)),)
-$(error "EXECHAX not set.")
-endif
-
-ifeq ($(strip $(FWVER)),)
-$(error "FWVER not set.")
-endif
-
-SAVETOOL_OPT	:= 
-
-ifneq ($(strip $(OUTPATH)),)
-	SAVETOOL_OPT	:= $(OUTPATH)/part_00/save00.bin
-endif
-
-all:	savefiles
-
-saveimages:	oot3dhax_E.sav oot3dhax_P.sav oot3dhax_J.sav
-
-savefiles:	save_usa.bin save_eur.bin save_jpn.bin
+## ======================
+## Utils targets
+## ======================
 
 clean:
-	rm -f oot3dhax_usa.elf oot3dhax_eur.elf oot3dhax_jpn.elf save_usa.bin save_eur.bin save_jpn.bin oot3dhax_E.sav oot3dhax_P.sav oot3dhax_J.sav
+	rm -f $(SAVE_FILES) $(ELF_FILES) $(SAVETOOL_NAME)
 
-oot3dhax_E.sav: save_usa.bin
-	$(SAVECMD) $(SAVECMD_E)
-	cp $(OUTPATH)/output.sav oot3dhax_E.sav
+re: clean all
 
-oot3dhax_P.sav: save_eur.bin
-	$(SAVECMD) $(SAVECMD_P)
-	cp $(OUTPATH)/output.sav oot3dhax_P.sav
-
-oot3dhax_J.sav: save_jpn.bin
-	$(SAVECMD) $(SAVECMD_J)
-	cp $(OUTPATH)/output.sav oot3dhax_J.sav
-
-save_usa.bin: oot3dhax_usa.elf
-	$(OBJCOPY) -O binary oot3dhax_usa.elf save_usa.bin
-	./oot3d_savetool save_usa.bin $(SAVETOOL_OPT)
-
-save_eur.bin: oot3dhax_eur.elf
-	$(OBJCOPY) -O binary oot3dhax_eur.elf save_eur.bin
-	./oot3d_savetool save_eur.bin $(SAVETOOL_OPT)
-
-save_jpn.bin: oot3dhax_jpn.elf
-	$(OBJCOPY) -O binary oot3dhax_jpn.elf save_jpn.bin
-	./oot3d_savetool save_jpn.bin $(SAVETOOL_OPT)
-
-oot3dhax_usa.elf:	oot3dhax.s
-	$(CC) -x assembler-with-cpp -nostartfiles -nostdlib -DREGION=1 -DEXECHAX=$(EXECHAX) -DFWVER=$(FWVER) $< -o oot3dhax_usa.elf
-
-oot3dhax_eur.elf:	oot3dhax.s
-	$(CC) -x assembler-with-cpp -nostartfiles -nostdlib -DREGION=2 -DEXECHAX=$(EXECHAX) -DFWVER=$(FWVER) $< -o oot3dhax_eur.elf
-
-oot3dhax_jpn.elf:	oot3dhax.s
-	$(CC) -x assembler-with-cpp -nostartfiles -nostdlib -DREGION=0 -DEXECHAX=$(EXECHAX) -DFWVER=$(FWVER) $< -o oot3dhax_jpn.elf
-
+.PHONY: clean all re
+.PRECIOUS: %.elf %.bin
