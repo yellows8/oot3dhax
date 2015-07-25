@@ -89,6 +89,8 @@
 #define MEMCPY 0x34338c
 #define MEMSET 0x32b184 //r0=adr, r1=size. The first instruction here is "r2=0", therefore jumping to +4 allows controlling the value which is written to the buffer.
 #define ROP_LDRR1R1_ADDR1R1R2LSL3_STRR1R0 0x3255dc //ldr r1, [r1, #4] ; add r1, r1, r2, lsl #3 ; str r1, [r0] ; bx lr
+
+#define DSP_SHUTDOWN 0x2ce818
 #else//JPN
 #define RDSAVEBEGINADR 0x3249c4+4
 #define WRSAVEBEGINADR 0x2e5c54+4
@@ -100,6 +102,8 @@
 #define MEMCPY 0x342ea4
 #define MEMSET 0x32ac9c
 #define ROP_LDRR1R1_ADDR1R1R2LSL3_STRR1R0 0x3250f4
+
+#define DSP_SHUTDOWN 0x2ce330
 #endif
 
 #define REGPOPADR 0x4a5c80 //Addr of this instruction: "pop {r0, r1, r2, r3, r4, r5, r6, fp, ip, pc}"
@@ -1043,6 +1047,11 @@ ldr r2, =GSP_CMD8//flushdcache
 ldr r0, =0x14313890
 ldr r1, =(0x46500*2)+0x10
 blx r2
+
+#ifndef DISABLE_DSPSHUTDOWN
+ldr r0, =DSP_SHUTDOWN
+blx r0
+#endif
 
 add r0, sp, #16 @ Out handle
 adr r1, arm11code_servname @ Service name ptr "fs:USER"

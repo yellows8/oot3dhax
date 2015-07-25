@@ -20,6 +20,7 @@ There's two build methods:
 Make command: 
 "make EXECHAX={value} FWVER={value}"
 FWVER should be any value >=0x25 for system-version >=v5.0 with EXECHAX=2, value 0x1F otherwise.  
+The following option can be added to the end of the above command, to disable calling dsp_shutdown(): "DISABLE_DSPSHUTDOWN=1" Normally this isn't needed. This option *must* *not* be used when this build would be used with a ninjhax2 payload.bin.
 
 EXECHAX values(see also http://3dbrew.org/wiki/3DS_System_Flaws):
 * 0 for arm9 pxips9hax(fixed with v5.0).
@@ -35,3 +36,4 @@ For reading/writing the savefile(this can be any save0X.bin file) with ctrclient
 * Write save00.bin:   ctrclient-yls8 --serveradr={ipadr} "--customcmd=directfilerw 0x567890B1 0x1 0x1 0x4 0x18 0x7 0x14dc 0x0 2F007300610076006500300030002E00620069006E000000 @input.bin"
 * Write payload.bin:  ctrclient-yls8 --serveradr={ipadr} "--customcmd=directfilerw 0x567890B1 0x1 0x1 0x4 0x1a 0x7 {payloadsize} 0x0 2F007000610079006C006F00610064002E00620069006E000000 @payload.bin"
 * Read payload.bin:   ctrclient-yls8 --serveradr={ipadr} "--customcmd=directfilerw 0x567890B1 0x1 0x1 0x4 0x1a 0x1 0x0 2F007000610079006C006F00610064002E00620069006E000000 @out.bin"
+

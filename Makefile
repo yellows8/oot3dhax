@@ -25,7 +25,13 @@ SAVETOOL_OPT	=
 ## ELF build variables
 ## ======================
 
-ELF_FLAGS	= -x assembler-with-cpp -nostartfiles -nostdlib -DREGION=$(DREGION) -DEXECHAX=$(EXECHAX) -DFWVER=$(FWVER)
+DEFINES	=	
+
+ifdef DISABLE_DSPSHUTDOWN
+	DEFINES	=	-DDISABLE_DSPSHUTDOWN
+endif
+
+ELF_FLAGS	= -x assembler-with-cpp -nostartfiles -nostdlib -DREGION=$(DREGION) -DEXECHAX=$(EXECHAX) -DFWVER=$(FWVER) $(DEFINES)
 ELF_SRCS	= oot3dhax.s
 
 ## ======================
