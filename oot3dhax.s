@@ -1161,8 +1161,7 @@ str r1, [r0, #0x64]
 
 arm11code_callpayload:
 mov r0, r5
-mov r1, #0x10000000
-sub r1, #4
+ldr r1, =(0x10000000-4)
 ldr r1, =0x00101000
 blx r1
 
