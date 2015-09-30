@@ -28,7 +28,7 @@ EXECHAX values(see also http://3dbrew.org/wiki/3DS_System_Flaws):
 * 2 for GSP arm11code-loading haxx.
 * 3 for arm9hax with AM(fixed with v5.0).
 
-The arm11-code uses gxcmd4 to load "/payload.bin" from the savedata FS to process-address 0x00101000 for execution, see source(filesize can be arbitary).  
+The arm11-code uses gxcmd4 to load "/payload.bin" from the savedata FS to process-address 0x00101000 for execution, see source(filesize can be arbitrary).  
 The arm9-code loads a payload from SD card, see source.  
 
 For reading/writing the savefile(this can be any save0X.bin file) with ctrclient-yls8, for gamecard:
