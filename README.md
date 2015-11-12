@@ -1,5 +1,5 @@
 # oot3dhax
-This is a 3DS savedata exploit for "The Legend of Zelda: Ocarina of Time 3D". Hence the datetime displayed for the save-slot, this haxx has existed since October 2012. The following regions are supported: USA, EUR, and JPN. Since the gamecard(there's only one "version" of the main CXI used for the gamecard) and eShop versions of the game are basically identical, the exploit can be used with both(if one can get the exploit savedata written to the save-image used by the target game version of course).  
+This is a 3DS savedata exploit for "The Legend of Zelda: Ocarina of Time 3D". Hence the datetime displayed for the save-slot, this haxx has existed since October 2012. The following regions are supported: USA, EUR, and JPN. Since the gamecard(there's only one "version" of the main CXI used for the gamecard) and eShop versions of the game are basically identical, the exploit can be used with both(if one can get the exploit savedata written to the savedata used by the target game version of course).  
 
 This savegame haxx is the same one referred to here: http://3dbrew.org/wiki/5.0.0-11  
 
@@ -31,9 +31,27 @@ EXECHAX values(see also http://3dbrew.org/wiki/3DS_System_Flaws):
 The arm11-code uses gxcmd4 to load "/payload.bin" from the savedata FS to process-address 0x00101000 for execution, see source(filesize can be arbitrary).  
 The arm9-code loads a payload from SD card, see source.  
 
+# Installation
+The recommended way to install oot3dhax is with either sploit_installer(https://github.com/smealum/sploit_installer), which is included with the homebrew starter-kit(https://smealum.github.io/3ds/), or by writing save-images with a gamecard save dongle for example.
+
+Raw save-images which can be written to the gamecard savedata flash are contained in the oot3dhax release-archive. The "saveimages" directory is for raw 0x20000-byte saveimages, while "saveimages_powersaves" is for Datel Powersaves. Those directories contain two sub-directories, each for a different cardid set. If you don't know what the carids for your gamecard are(these are included with what are commonly called "gamecard-unique headers"), just try either directory until one of them works without the game triggering a savedata-corruption error at boot. These directories then contain sub-directories for each game region. The saveimage files under those region directories have the same filename as the payload contained in the savedata, you can use the filename from this to determine which saveimage filename to use: https://smealum.github.io/3ds/#otherapp
+
+Before using the "saveimages" directory, you should verify that your savedata backup filesize matches the filesize from the files from that directory.
+
+Instructions for using with Datel Powersaves:
+* 1) Backup your gamecard savedata with Powersaves, even if you don't want to keep that savedata.
+* 2) In Windows Explorer, goto "C:\Users\YourUsername\Powersaves3DS".
+* 3) Copy the saveimage you selected from the saveimages_powersaves directory in the release-archive as described above, to this Powersaves3DS directory.
+* 4) Rename your backup save to a different filename.
+* 5) Rename the oot3dhax saveimage to the filename which the backup save had originally.
+* 6) Use Powersaves to restore the save.
+
 For reading/writing the savefile(this can be any save0X.bin file) with ctrclient-yls8, for gamecard:
 * Reading save00.bin: ctrclient-yls8 --serveradr={ipadr} "--customcmd=directfilerw 0x567890B1 0x1 0x1 0x4 0x18 0x1 0x0 2F007300610076006500300030002E00620069006E000000 @out.bin"
 * Write save00.bin:   ctrclient-yls8 --serveradr={ipadr} "--customcmd=directfilerw 0x567890B1 0x1 0x1 0x4 0x18 0x7 0x14dc 0x0 2F007300610076006500300030002E00620069006E000000 @input.bin"
 * Write payload.bin:  ctrclient-yls8 --serveradr={ipadr} "--customcmd=directfilerw 0x567890B1 0x1 0x1 0x4 0x1a 0x7 {payloadsize} 0x0 2F007000610079006C006F00610064002E00620069006E000000 @payload.bin"
 * Read payload.bin:   ctrclient-yls8 --serveradr={ipadr} "--customcmd=directfilerw 0x567890B1 0x1 0x1 0x4 0x1a 0x1 0x0 2F007000610079006C006F00610064002E00620069006E000000 @out.bin"
+
+# Credits
+* Myria: REing Powersaves for the additional save header(+ this tool https://github.com/Myriachan/Powersaves3DS/blob/master/MakePowersave.py), testing saveimages for the 3 regions(USA+EUR+JPN), and for Powersaves instructions which the above instructions are based on.
 
