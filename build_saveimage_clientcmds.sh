@@ -1,0 +1,23 @@
+# build_saveimage_clientcmds.sh serverip <readbuf in the linermem area, such as 0x3E220000> <output rawsave.bin> <oot3dhax savefile> <payloadpath>
+
+set -e
+
+statsize=`stat -L -c %s "$5"`
+hexsize=`echo -e "obase=16\n$statsize" | bc`
+
+# FS:FormatSaveData
+echo "writemem:11 0x8068000 0xc 0x2 0x0 0x0"
+echo "sendservicecmd:5 0x0 0x084C0242 0x567890B2 0x2 0xc 0x200 0x0 0x8 0x3 0x9 0x1 0x30002 0x8068000"
+
+# Write the files to the save.
+echo "directfilerw 0x567890B1 0x1 0x1 0x4 0x18 0x7 0x14dc 0x0 2F007300610076006500300030002E00620069006E000000 @$4"
+
+echo "directfilerw 0x567890B1 0x1 0x1 0x4 0x18 0x7 0x22 0x0 2F00730079007300740065006D002E006400610074000000 @oot3dhax_system.dat"
+
+echo "directfilerw 0x567890B1 0x1 0x1 0x4 0x1a 0x7 0x$hexsize 0x0 2F007000610079006C006F00610064002E00620069006E000000 @$5"
+
+# Read the raw flash image.
+echo "sendservicecmd:5 0x0 0x082800C2 0x3 0x0 0x20000 0x80000C $2"
+# Read the dumped save from memory.
+echo "readmem:11 $2 0x20000 @$3"
+
