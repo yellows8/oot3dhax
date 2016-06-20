@@ -1,9 +1,9 @@
 # oot3dhax
 This is a 3DS savedata exploit for "The Legend of Zelda: Ocarina of Time 3D". Hence the datetime displayed for the save-slot, this haxx has existed since October 2012. The following regions are supported: USA, EUR, and JPN. Since the gamecard(there's only one "version" of the main CXI used for the gamecard) and eShop versions of the game are basically identical, the exploit can be used with both(if one can get the exploit savedata written to the savedata used by the target game version of course).  
 
-This savegame haxx is the same one referred to here: http://3dbrew.org/wiki/5.0.0-11  
+This savegame haxx is the same one referred to here: https://www.3dbrew.org/wiki/5.0.0-11  
 
-For details on the vuln/etc, see source and here: http://3dbrew.org/wiki/3DS_Userland_Flaws
+For details on the vuln/etc, see source and here: https://www.3dbrew.org/wiki/3DS_Userland_Flaws
 
 ### Haxx usage
 1. Goto the save-slot select screen
@@ -11,6 +11,11 @@ For details on the vuln/etc, see source and here: http://3dbrew.org/wiki/3DS_Use
 3. Begin loading the save-slot
 4. Wait for the game to finish loading
 5. Either press A, do anything triggering display of dialogs, or press any button on the touch-screen(the VIEW button, the MAP button, and the buttons for the currently equipped items don't trigger it).  
+
+### 11.0.0.33 support
+Currently system-version 11.0.0.33 is not supported, as mentioned here: https://www.3dbrew.org/wiki/11.0.0-33
+
+This will be updated eventually.
 
 ### Build methods
 There's two build methods:
@@ -22,7 +27,7 @@ Make command:
 FWVER should be any value >=0x25 for system-version >=v5.0 with EXECHAX=2, value 0x1F otherwise.  
 The following option can be added to the end of the above command, to disable calling dsp_shutdown(): "DISABLE_DSPSHUTDOWN=1" Normally this isn't needed. This option *must* *not* be used when this build would be used with a ninjhax2 payload.bin.
 
-EXECHAX values(see also http://3dbrew.org/wiki/3DS_System_Flaws):
+EXECHAX values(see also https://www.3dbrew.org/wiki/3DS_System_Flaws):
 * 0 for arm9 pxips9hax(fixed with v5.0).
 * 1 for arm11code-loading via reading the savefile with fsuser directly to .text(fixed with system-version v4.0).
 * 2 for GSP arm11code-loading haxx.
