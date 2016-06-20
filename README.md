@@ -51,12 +51,6 @@ Instructions for using with Datel Powersaves:
 * 5) Rename the oot3dhax saveimage to the filename which the backup save had originally.
 * 6) Use Powersaves to restore the save.
 
-For reading/writing the savefile(this can be any save0X.bin file) with ctrclient-yls8, for gamecard:
-* Reading save00.bin: ctrclient-yls8 --serveradr={ipadr} "--customcmd=directfilerw 0x567890B1 0x1 0x1 0x4 0x18 0x1 0x0 2F007300610076006500300030002E00620069006E000000 @out.bin"
-* Write save00.bin:   ctrclient-yls8 --serveradr={ipadr} "--customcmd=directfilerw 0x567890B1 0x1 0x1 0x4 0x18 0x7 0x14dc 0x0 2F007300610076006500300030002E00620069006E000000 @input.bin"
-* Write payload.bin:  ctrclient-yls8 --serveradr={ipadr} "--customcmd=directfilerw 0x567890B1 0x1 0x1 0x4 0x1a 0x7 {payloadsize} 0x0 2F007000610079006C006F00610064002E00620069006E000000 @payload.bin"
-* Read payload.bin:   ctrclient-yls8 --serveradr={ipadr} "--customcmd=directfilerw 0x567890B1 0x1 0x1 0x4 0x1a 0x1 0x0 2F007000610079006C006F00610064002E00620069006E000000 @out.bin"
-
 # Credits
 * Myria: REing Powersaves for the additional save header(+ this tool https://github.com/Myriachan/Powersaves3DS/blob/master/MakePowersave.py), testing saveimages for the 3 regions(USA+EUR+JPN), and for Powersaves instructions which the above instructions are based on.
 
