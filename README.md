@@ -15,7 +15,7 @@ For details on the vuln/etc, see source and here: https://www.3dbrew.org/wiki/3D
 ### 11.0.0.33 support
 Currently system-version 11.0.0.33 is not supported, as mentioned here: https://www.3dbrew.org/wiki/11.0.0-33
 
-This will be updated to support v11.0 eventually, via: https://github.com/yellows8/3ds_ropkit
+Once this is updated to use [3ds_ropkit](https://github.com/yellows8/3ds_ropkit), v11.0 will be supported.
 
 ### Build methods
 There's two build methods:
