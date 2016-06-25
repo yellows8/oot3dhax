@@ -1,8 +1,10 @@
 # Usage: ./oot3dhax_geninc.sh <path to yellows8github/3ds_ropkit repo> <codebin path>
 
-set -e
-
 $1/generate_ropinclude.sh $2 $1
+if [[ $? -ne 0 ]]; then
+	echo "//ERROR: 3ds_ropkit generate_ropinclude.sh returned an error."
+	exit 1
+fi
 
 echo ""
 
@@ -33,6 +35,16 @@ if [[ $? -eq 0 ]]; then
 	echo "$printstr"
 else
 	echo "//ERROR: GETTHREADSTORAGE not found."
+	exit 1
+fi
+
+# r4 = r0 + r1<<2. classptr = *(r5+0x38). Calls vtable funcptr +16 with r3 for the funcptr, r2=*r4, r1=<ptr loaded from pool>
+printstr=`ropgadget_patternfinder $2 --baseaddr=0x100000 --patterntype=sha256 --patterndata=23231e1ffd8a1c7334687414fcd4d63435c4d1279c86f85806da4b6438a236d3 --patternsha256size=0x24 "--plainout=#define ADDSHIFTVAL_BLXR3 "`
+
+if [[ $? -eq 0 ]]; then
+	echo "$printstr"
+else
+	echo "//ERROR: ADDSHIFTVAL_BLXR3 not found."
 	exit 1
 fi
 

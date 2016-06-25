@@ -16,10 +16,8 @@
 
 #if REGION!=0//Non-JPN
 #define THROWFATALERR 0x3351b4
-#define ADDSHIFTVAL_BLXR3 0x3201dc //r4 = r0 + r1<<2. classptr = *(r5+0x38). Calls vtable funcptr +16 with r3 for the funcptr, r2=*r4, r1=<ptr loaded from pool>
 #else//JPN
 #define THROWFATALERR 0x334ccc
-#define ADDSHIFTVAL_BLXR3 0x31fcf4
 #endif
 
 #define RSAINFO_OFF 0x880+0x40
