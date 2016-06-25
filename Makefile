@@ -27,11 +27,7 @@ SAVETOOL_OPT	=
 
 DEFINES	=	
 
-ifdef DISABLE_DSPSHUTDOWN
-	DEFINES	=	-DDISABLE_DSPSHUTDOWN
-endif
-
-ELF_FLAGS	= -x assembler-with-cpp -nostartfiles -nostdlib -DREGION=$(DREGION) -DEXECHAX=$(EXECHAX) -DFWVER=$(FWVER) $(DEFINES)
+ELF_FLAGS	= -x assembler-with-cpp -nostartfiles -nostdlib -DREGION=$(DREGION) -DEXECHAX=$(EXECHAX) -DFWVER=$(FWVER) $(DEFINES) -include ropinclude/$(DREGION) -I$(ROPKIT_PATH)
 ELF_SRCS	= oot3dhax.s
 
 ## ======================
@@ -59,6 +55,9 @@ ifndef EXECHAX
 endif
 ifndef FWVER
 	$(error "FWVER not set.")
+endif
+ifndef ROPKIT_PATH
+	$(error "ROPKIT_PATH is not set.")
 endif
 
 include $(DEVKITARM)/base_rules

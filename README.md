@@ -13,9 +13,7 @@ For details on the vuln/etc, see source and here: https://www.3dbrew.org/wiki/3D
 5. Either press A, do anything triggering display of dialogs, or press any button on the touch-screen(the VIEW button, the MAP button, and the buttons for the currently equipped items don't trigger it).  
 
 ### 11.0.0.33 support
-Currently system-version 11.0.0.33 is not supported, as mentioned here: https://www.3dbrew.org/wiki/11.0.0-33
-
-Once this is updated to use [3ds_ropkit](https://github.com/yellows8/3ds_ropkit), v11.0 will be supported.
+[11.0.0.33](https://www.3dbrew.org/wiki/11.0.0-33) is supported in git, however builds for this are not yet released.
 
 ### Build methods
 There's two build methods:
@@ -25,7 +23,6 @@ There's two build methods:
 Make command: 
 "make EXECHAX={value} FWVER={value}"
 FWVER should be any value >=0x25 for system-version >=v5.0 with EXECHAX=2, value 0x1F otherwise.  
-The following option can be added to the end of the above command, to disable calling dsp_shutdown(): "DISABLE_DSPSHUTDOWN=1" Normally this isn't needed. This option *must* *not* be used when this build would be used with a ninjhax2 payload.bin.
 
 EXECHAX values(see also https://www.3dbrew.org/wiki/3DS_System_Flaws):
 * 0 for arm9 pxips9hax(fixed with v5.0).
