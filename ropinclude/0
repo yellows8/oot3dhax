@@ -43,5 +43,6 @@
 #define IFile_Open 0x0030d098
 #define IFile_Close 0x30d12c
 
+#define srvinit_RegisterClient 0x0030dab0
 
 #define ROPBUF 0x00587958
