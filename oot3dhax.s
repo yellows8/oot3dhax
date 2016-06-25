@@ -49,8 +49,6 @@
 #error Invalid region.
 #endif
 
-#define REGPOPR5R6 0x4b7cb0 //Addr of this instruction: "pop {r5, r6, pc}"
-
 #define RSAINFO_OFF 0x880+0x40
 
 #define SRVACCESS_OFF 0xf00 //Savegame offset for the new service access control.
@@ -127,7 +125,7 @@ ROP_SETR1 0x20
 .word 0 @ r3
 .word 0 @ sl
 .word 0 @ ip
-.word REGPOPR5R6
+.word POP_R5R6PC
 
 .word \HANDLE @ r5, Handle*
 .word 0 @ r6
