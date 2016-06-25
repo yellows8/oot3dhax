@@ -15,12 +15,6 @@
 #include "ropkit_ropinclude.s"
 
 #if REGION!=0//Non-JPN
-#define svcConnectToPort 0x2fa7b8
-#else//JPN
-#define svcConnectToPort 0x2fa2d0
-#endif
-
-#if REGION!=0//Non-JPN
 #define srvinit_RegisterClient 0x30df98 //Calls srv_RegisterClient(), increments *r6, L_30aedc(sp+0), then executes "pop {r3, r4, r5, r6, r7, pc}". L_30aedc decreases *(inr0+8) by 1, and returns if that's >0 after decreasing it.
 #else//JPN
 #define srvinit_RegisterClient 0x30dab0
