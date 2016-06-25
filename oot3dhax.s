@@ -14,8 +14,6 @@
 
 #include "ropkit_ropinclude.s"
 
-#define CLOSEHANDLE 0x400ae4+4 //mov r4, r0. ptr = inr0, if(*ptr)svcCloseHandle(*ptr). *ptr = 0, r0 = ptr, "pop {r4, pc}".
-
 #if REGION!=0//Non-JPN
 #define THROWFATALERR 0x3351b4
 #define GETTHREADSTORAGE 0x2db5ac //Stores r0 from "mrc 15, 0, r0, cr13, cr0, {3}" to r3+4, increments the word @ r3+8, r0=1 then pop {r4} bx	lr

@@ -45,5 +45,6 @@
 #define IFile_Close 0x30d12c
 
 #define srvinit_RegisterClient 0x0030dab0
+#define CLOSEHANDLE 0x00400a54
 
 #define ROPBUF 0x00587958

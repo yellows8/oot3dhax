@@ -16,4 +16,14 @@ else
 	exit 1
 fi
 
+# mov r4, r0. ptr = inr0, if(*ptr)svcCloseHandle(*ptr). *ptr = 0, r0 = ptr, "pop {r4, pc}".
+printstr=`ropgadget_patternfinder $2 --baseaddr=0x100000 --patterntype=sha256 --patterndata=21665d66ea3ddfbdd79414c8d822e69303e74b5ac7bce44aaedf9bd7013b5e39 --patternsha256size=0x24 "--plainout=#define CLOSEHANDLE "`
+
+if [[ $? -eq 0 ]]; then
+	echo "$printstr"
+else
+	echo "//ERROR: CLOSEHANDLE not found."
+	exit 1
+fi
+
 echo -e "\n#define ROPBUF 0x00587958"
