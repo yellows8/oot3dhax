@@ -14,7 +14,6 @@
 
 #include "ropkit_ropinclude.s"
 
-#define GETPROCID 0x409bec //Calls svcGetProcessId, "mov r0, r4", then pop {r3, r4, r5, pc}
 #define CLOSEHANDLE 0x400ae4+4 //mov r4, r0. ptr = inr0, if(*ptr)svcCloseHandle(*ptr). *ptr = 0, r0 = ptr, "pop {r4, pc}".
 
 #if REGION!=0//Non-JPN
@@ -183,9 +182,7 @@ COND_THROWFATALERR
 .word 0 @ r6
 .word 0 @ r7
 
-CALLFUNC_NOSP GETPROCID, ROPBUF+0x1080, 0xffff8001, 0, 0
-
-.word 0, 0, 0
+CALLFUNC_NOSP svcGetProcessId, ROPBUF+0x1080, 0xffff8001, 0, 0
 
 SENDCMD 0x00558ad4, 0x04040040, ROPBUF+0x1080 @ Unregister this process from srv:pm.
 SENDCMD 0x00558ad4, 0x04030082, ROPBUF+0x1080 @ Register this process with srv:pm, with new service access control.
