@@ -53,14 +53,14 @@
 /*#define RDSAVEBEGINADR 0x324eac+4
 #define WRSAVEBEGINADR 0x2e613c+4
 #define SAVECTXDESTORYADR 0x31b99c+0xc*/
-#define FSUMNTADR 0x2fbfa8+4
+//#define FSUMNTADR 0x2fbfa8+4
 
 #define BLXR6 0x2c45e0 //Executes "blx r6", increments r4, then if r4>=16 executes vpop {d8}, pop {r4, r5, r6, r7, r8, r9, sl, pc}
 #else//JPN
 /*#define RDSAVEBEGINADR 0x3249c4+4
 #define WRSAVEBEGINADR 0x2e5c54+4
 #define SAVECTXDESTORYADR 0x31b4b4+0xc*/
-#define FSUMNTADR 0x2fbac0
+//#define FSUMNTADR 0x2fbac0
 
 #define BLXR6 0x2c40f8
 #endif
@@ -366,12 +366,12 @@ CALLFUNC_NOSP IFile_Read, ROPBUF+0x1044, ROPBUF+0x1048, 0x2cd2b4, ARM11CODE_OFF+
 
 ROPMACRO_IFile_Close ROPBUF+0x1044
 
-.word REGPOPADR
+/*.word REGPOPADR
 .word 0x3071d8
 .word 0, 0, 0
 .word 0, 0, 0, 0, 0
 .word FSUMNTADR
-.word 0, 0, 0, 0, 0, 0
+.word 0, 0, 0, 0, 0, 0*/
 
 .word 0x2cd2b4+ARM11CODE_OFF
 #endif
