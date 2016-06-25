@@ -33,16 +33,6 @@
 #define ADDSHIFTVAL_BLXR3 0x31fcf4
 #endif
 
-#if REGION==1 //USA
-#define SENDCMDADR 0x4360a0 //Writes r0 to r4+0, then copies 0x80-bytes from r1 to r4+4. Then uses svcSendSyncRequest with handle *r5.
-#elif REGION==2 //EUR
-#define SENDCMDADR 0x4360c4
-#elif REGION==0 //JPN
-#define SENDCMDADR 0x436078
-#else
-#error Invalid region.
-#endif
-
 #define RSAINFO_OFF 0x880+0x40
 
 #define SRVACCESS_OFF 0xf00 //Savegame offset for the new service access control.
@@ -123,7 +113,7 @@ ROP_SETR1 0x20
 
 .word \HANDLE @ r5, Handle*
 .word 0 @ r6
-.word SENDCMDADR
+.word ROP_SENDCMDADDR
 
 .word 0 @ r4
 .word 0 @ r5
