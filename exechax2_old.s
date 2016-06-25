@@ -6,6 +6,14 @@
 #define TEXT_APPMEM_OFFSET (CODE_ALIGNEDSIZE - 0x5B000)
 #endif
 
+#if REGION!=0//Non-JPN
+#define ROP_LDRR1R1_ADDR1R1R2LSL3_STRR1R0 0x3255dc //ldr r1, [r1, #4] ; add r1, r1, r2, lsl #3 ; str r1, [r0] ; bx lr
+#else//JPN
+#define ROP_LDRR1R1_ADDR1R1R2LSL3_STRR1R0 0x3250f4
+#endif
+
+#define ROP_WRITER4_TOR0_x2b0_POPR4R5R6PC 0x174de8 //"str r4, [r0, #0x2b0]" "pop {r4, r5, r6, pc}"
+
 #if EXECHAX==2
 .word REGPOPADR
 .word 0x14700000 @ r0, Dst

@@ -55,8 +55,6 @@
 #define FSUMNTADR 0x2fbfa8+4
 
 #define BLXR6 0x2c45e0 //Executes "blx r6", increments r4, then if r4>=16 executes vpop {d8}, pop {r4, r5, r6, r7, r8, r9, sl, pc}
-#define ROP_LDRR1R1_ADDR1R1R2LSL3_STRR1R0 0x3255dc //ldr r1, [r1, #4] ; add r1, r1, r2, lsl #3 ; str r1, [r0] ; bx lr
-
 #else//JPN
 /*#define RDSAVEBEGINADR 0x3249c4+4
 #define WRSAVEBEGINADR 0x2e5c54+4
@@ -65,16 +63,12 @@
 #define FSUMNTADR 0x2fbac0
 
 #define BLXR6 0x2c40f8
-#define ROP_LDRR1R1_ADDR1R1R2LSL3_STRR1R0 0x3250f4
-
 #endif
 
 #define REGPOPADR 0x4a5c80 //Addr of this instruction: "pop {r0, r1, r2, r3, r4, r5, r6, fp, ip, pc}"
-#define REGPOPR0R3SL 0x4a8964 //Addr of this instruction: "pop {r0, r1, r2, r3, sl, ip, pc}"
+//#define REGPOPR0R3SL 0x4a8964 //Addr of this instruction: "pop {r0, r1, r2, r3, sl, ip, pc}"
 #define REGPOPR5R6 0x4b7cb0 //Addr of this instruction: "pop {r5, r6, pc}"
 //#define STACKMEMCPYADR 0x1aa988
-
-#define ROP_WRITER4_TOR0_x2b0_POPR4R5R6PC 0x174de8 //"str r4, [r0, #0x2b0]" "pop {r4, r5, r6, pc}"
 
 #define RSAINFO_OFF 0x880+0x40
 
