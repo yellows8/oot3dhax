@@ -14,12 +14,6 @@
 
 #include "ropkit_ropinclude.s"
 
-#if REGION!=0//Non-JPN
-#define THROWFATALERR 0x3351b4
-#else//JPN
-#define THROWFATALERR 0x334ccc
-#endif
-
 #define RSAINFO_OFF 0x880+0x40
 
 #define SRVACCESS_OFF 0xf00 //Savegame offset for the new service access control.

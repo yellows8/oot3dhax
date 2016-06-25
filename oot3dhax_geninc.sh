@@ -48,4 +48,14 @@ else
 	exit 1
 fi
 
+# Locate THROWFATALERR.
+printstr=`ropgadget_patternfinder $2 --baseaddr=0x100000 --patterntype=sha256 --patterndata=6092772bed3e7da9bcbae4252528d002e4ca8d4cdd80249bd089d60af3cd8643 --patternsha256size=0x28 "--plainout=#define THROWFATALERR "`
+
+if [[ $? -eq 0 ]]; then
+	echo "$printstr"
+else
+	echo "//ERROR: THROWFATALERR not found."
+	exit 1
+fi
+
 echo -e "\n#define ROPBUF 0x00587958"
