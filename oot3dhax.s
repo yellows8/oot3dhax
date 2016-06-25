@@ -10,6 +10,8 @@
 
 #define ROPKIT_LINEARMEM_BUF (ROPKIT_LINEARMEM_REGIONBASE+0x700000)
 
+#define ROPKIT_MOUNTSAVEDATA
+
 #include "ropkit_ropinclude.s"
 
 #if REGION!=0//Non-JPN
@@ -51,7 +53,6 @@
 /*#define RDSAVEBEGINADR 0x324eac+4
 #define WRSAVEBEGINADR 0x2e613c+4
 #define SAVECTXDESTORYADR 0x31b99c+0xc*/
-#define FSMNTSAVEADR 0x2fc0c8+4 //This is after this instruction: "push {r3, r4, r5, lr}"
 #define FSUMNTADR 0x2fbfa8+4
 
 #define BLXR6 0x2c45e0 //Executes "blx r6", increments r4, then if r4>=16 executes vpop {d8}, pop {r4, r5, r6, r7, r8, r9, sl, pc}
@@ -59,7 +60,6 @@
 /*#define RDSAVEBEGINADR 0x3249c4+4
 #define WRSAVEBEGINADR 0x2e5c54+4
 #define SAVECTXDESTORYADR 0x31b4b4+0xc*/
-#define FSMNTSAVEADR 0x2fbbe0+4
 #define FSUMNTADR 0x2fbac0
 
 #define BLXR6 0x2c40f8
@@ -344,17 +344,7 @@ SENDCMD ROPBUF+0x1040, 0x00190040, ROPBUF+0x1200 @ ReloadDBS
 #endif
 
 #if EXECHAX==1 //This code exec method reads save00.bin to .text. This only works prior to system version 4.0.0-7, with FW1D/4.0.0-7 this causes a kernel panic.
-.word REGPOPADR
-.word 0x3071d8 @ r0
-.word 0 @ r1
-.word 0 @ r2
-.word 0 @ r3
-.word 0 @ r4
-.word 0 @ r5
-.word 0 @ r6
-.word 0 @ fp
-.word 0 @ ip
-.word FSMNTSAVEADR @ Mount the savegame "data:" archive.
+CALLFUNC_NOSP FS_MountSavedata, (ROPBUF + (savedata_archivename - _start)), 0, 0, 0
 
 .word 0, 0, 0
 /*.word REGPOPADR
@@ -387,20 +377,6 @@ ROPMACRO_IFile_Close ROPBUF+0x1044
 #endif
 
 #if EXECHAX==2
-.word REGPOPADR
-.word 0x3071d8 @ r0
-.word 0 @ r1
-.word 0 @ r2
-.word 0 @ r3
-.word 0 @ r4
-.word 0 @ r5
-.word 0 @ r6
-.word 0 @ fp
-.word 0 @ ip
-.word FSMNTSAVEADR @ Mount the savegame "data:" archive.
-
-.word 0, 0, 0
-
 #include "ropkit_boototherapp.s"
 
 ropkit_cmpobject:
@@ -696,6 +672,10 @@ arm9_loadaddr:
 #if EXECHAX==1
 .space (_start + 0x1000) - .
 .hword 0x64, 0x61, 0x74, 0x61, 0x3A, 0x2F, 0x73, 0x61, 0x76, 0x65, 0x30, 0x30, 0x2E, 0x62, 0x69, 0x6E, 0x00
+.align 2
+
+savedata_archivename:
+.string "data:"
 .align 2
 #endif
 
