@@ -46,5 +46,6 @@
 
 #define srvinit_RegisterClient 0x0030df98
 #define CLOSEHANDLE 0x00400a54
+#define GETTHREADSTORAGE 0x002db5ac
 
 #define ROPBUF 0x00587958

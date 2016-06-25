@@ -26,4 +26,14 @@ else
 	exit 1
 fi
 
+# Stores r0 from "mrc 15, 0, r0, cr13, cr0, {3}" to r3+4, increments the word @ r3+8, r0=1 then pop {r4} bx	lr
+printstr=`ropgadget_patternfinder $2 --baseaddr=0x100000 --patterntype=sha256 --patterndata=4756715c4a4e99e6c2ca7ff72bd4ea4115713e1c9d36983b27285dafb5b45114 --patternsha256size=0x20 "--plainout=#define GETTHREADSTORAGE "`
+
+if [[ $? -eq 0 ]]; then
+	echo "$printstr"
+else
+	echo "//ERROR: GETTHREADSTORAGE not found."
+	exit 1
+fi
+
 echo -e "\n#define ROPBUF 0x00587958"
