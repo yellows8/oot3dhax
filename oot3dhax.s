@@ -147,14 +147,12 @@ _start:
 ropstackstart:
 
 #ifdef REPLACE_SRVACCESSCONTROL
-@ r0 = Address of the "srv:" handle(0x00558ad4).
-CALLFUNC_NOSP CLOSEHANDLE, 0x00558ad4, 0, 0, 0
+CALLFUNC_NOSP CLOSEHANDLE, SRV_SESSIONHANDLE, 0, 0, 0
 
 .word 0 @ r4
 
-@ Outhandle is @ 0x00558ad4.
-@ 0x4e7480 is "srv:", 0x4e7485 is "srv:pm".
-CALLFUNC_NOSP svcConnectToPort, 0x00558ad4, 0x4e7485, 0, 0
+@ Outhandle is @ SRV_SESSIONHANDLE.
+CALLFUNC_NOSP svcConnectToPort, SRV_SESSIONHANDLE, (ROPBUF + (srvpm_string - _start)), 0, 0
 
 COND_THROWFATALERR
 
@@ -172,8 +170,8 @@ COND_THROWFATALERR
 
 CALLFUNC_NOSP svcGetProcessId, ROPBUF+0x1080, 0xffff8001, 0, 0
 
-SENDCMD 0x00558ad4, 0x04040040, ROPBUF+0x1080 @ Unregister this process from srv:pm.
-SENDCMD 0x00558ad4, 0x04030082, ROPBUF+0x1080 @ Register this process with srv:pm, with new service access control.
+SENDCMD SRV_SESSIONHANDLE, 0x04040040, ROPBUF+0x1080 @ Unregister this process from srv:pm.
+SENDCMD SRV_SESSIONHANDLE, 0x04030082, ROPBUF+0x1080 @ Register this process with srv:pm, with new service access control.
 #endif
 
 #if EXECHAX==0
@@ -532,6 +530,10 @@ savedata_archivename:
 .word 0x18 @ Service access control size, in words
 .word 0x180002
 .word ROPBUF+SRVACCESS_OFF @ Service access control ptr
+
+.space 0x80
+srvpm_string:
+.string "srv:pm"
 #endif
 
 #if EXECHAX==0
