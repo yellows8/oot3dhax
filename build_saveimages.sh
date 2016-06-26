@@ -8,8 +8,8 @@ patchaddr=$3
 
 function init_keyslots
 {
-	ctrclient-yls8 --serveradr=$serverip --keyslot=33 "--keyY=$1$2"fe009000000000
-	ctrclient-yls8 --serveradr=$serverip --keyslot=37 "--keyY=$1$2"fe009000000000
+	3dshaxclient --serveradr=$serverip --keyslot=33 "--keyY=$1$2"fe009000000000
+	3dshaxclient --serveradr=$serverip --keyslot=37 "--keyY=$1$2"fe009000000000
 }
 
 function build_region
@@ -31,7 +31,7 @@ function build_region
 	echo "quit" >> clientscript
 
 	echo "Running clientscript..."
-	cat clientscript | ctrclient-yls8 --serveradr=$serverip --shell=0
+	cat clientscript | 3dshaxclient --serveradr=$serverip --shell=0
 }
 
 rm -R -f saveimages
@@ -43,8 +43,8 @@ curl -v https://smealum.github.io/ninjhax2/otherapp.zip > otherapp.zip
 unzip otherapp.zip -d otherapp_payloads
 
 # Temporarily NOP-out the Process9 code which sets the gamecard savedata keyslots' keyY.
-ctrclient-yls8 --serveradr=$serverip "--customcmd=readmem:9 $patchaddr 0xc @tmpcode.bin"
-ctrclient-yls8 --serveradr=$serverip "--customcmd=writemem:9 $patchaddr 0xc 0x0 0x0 0x0"
+3dshaxclient --serveradr=$serverip "--customcmd=readmem:9 $patchaddr 0xc @tmpcode.bin"
+3dshaxclient --serveradr=$serverip "--customcmd=writemem:9 $patchaddr 0xc 0x0 0x0 0x0"
 
 build_region "usa" "U" "c2"
 build_region "usa" "U" "45"
@@ -57,7 +57,7 @@ build_region "jpn" "J" "45"
 
 echo "Building for your own gamecard..."
 init_keyslots `cat accessdescsig_oot3dusa` "c2"
-./build_saveimage_clientcmds.sh $serverip $readbuf savedump_usergamecardoot3dhax.bin oot3dhax_$4.bin otherapp_payloads/otherapp/$5 | ctrclient-yls8 --serveradr=$serverip --shell=0
+./build_saveimage_clientcmds.sh $serverip $readbuf savedump_usergamecardoot3dhax.bin oot3dhax_$4.bin otherapp_payloads/otherapp/$5 | 3dshaxclient --serveradr=$serverip --shell=0
 
-ctrclient-yls8 --serveradr=$serverip "--customcmd=writemem:9 $patchaddr 0xc @tmpcode.bin"
+3dshaxclient --serveradr=$serverip "--customcmd=writemem:9 $patchaddr 0xc @tmpcode.bin"
 

@@ -10,10 +10,10 @@ For details on the vuln/etc, see source and here: https://www.3dbrew.org/wiki/3D
 2. Select haxx save-saveslot 
 3. Begin loading the save-slot
 4. Wait for the game to finish loading
-5. Either press A, do anything triggering display of dialogs, or press any button on the touch-screen(the VIEW button, the MAP button, and the buttons for the currently equipped items don't trigger it).  
+5. Press A, for triggering dialog handling.  
 
 ### 11.0.0.33 support
-[11.0.0.33](https://www.3dbrew.org/wiki/11.0.0-33) is supported in git, however builds for this are not yet released.
+[11.0.0.33](https://www.3dbrew.org/wiki/11.0.0-33) is supported with the June 26, 2016, oot3dhax release builds.
 
 ### Build methods
 There's two build methods:
@@ -22,15 +22,13 @@ There's two build methods:
 
 Make command: 
 "make EXECHAX={value} FWVER={value}"
-FWVER should be any value >=0x25 for system-version >=v5.0 with EXECHAX=2, value 0x1F otherwise.  
 
 EXECHAX values(see also https://www.3dbrew.org/wiki/3DS_System_Flaws):
 * 0 for arm9 pxips9hax(fixed with v5.0).
 * 1 for arm11code-loading via reading the savefile with fsuser directly to .text(fixed with system-version v4.0).
-* 2 for GSP arm11code-loading haxx.
+* 2 for GSP arm11code-loading haxx. This is done with [3ds_ropkit](https://github.com/yellows8/3ds_ropkit).
 * 3 for arm9hax with AM(fixed with v5.0).
 
-The arm11-code uses gxcmd4 to load "/payload.bin" from the savedata FS to process-address 0x00101000 for execution, see source(filesize can be arbitrary).  
 The arm9-code loads a payload from SD card, see source.  
 
 # Installation
