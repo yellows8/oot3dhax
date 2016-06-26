@@ -69,4 +69,14 @@ else
 	exit 1
 fi
 
-echo -e "\n#define ROPBUF 0x00587958"
+echo ""
+
+# Locate ROPBUF, the savedata buffer.
+printstr=`ropgadget_patternfinder $2 --baseaddr=0x100000 --patterntype=sha256 --patterndata=375846c03e018e634226ebce1b010b5acf4d772d4ecccebb96092c3b5a03859e --patternsha256size=0x58 --dataload=0x180 "--plainout=#define ROPBUF "`
+
+if [[ $? -eq 0 ]]; then
+	echo "$printstr"
+else
+	echo "//ERROR: ROPBUF not found."
+	exit 1
+fi
