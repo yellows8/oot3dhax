@@ -525,15 +525,14 @@ savedata_archivename:
 #endif
 
 #ifdef REPLACE_SRVACCESSCONTROL
+srvpm_string:
+.string "srv:pm"
+
 .space (_start + 0x1080) - . @ srv:pm cmd
 .word 0 @ ProcessID
 .word 0x18 @ Service access control size, in words
 .word 0x180002
 .word ROPBUF+SRVACCESS_OFF @ Service access control ptr
-
-.space 0x80
-srvpm_string:
-.string "srv:pm"
 #endif
 
 #if EXECHAX==0
