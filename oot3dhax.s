@@ -234,7 +234,7 @@ ROPMACRO_IFile_Close ROPBUF+0x1044
 
 ropkit_cmpobject:
 .word (ROPBUFLOC(ropkit_cmpobject) + 0x4) @ Vtable-ptr
-.fill (0x40 / 4), 4, ROP_POPR3_ADDSPR3_POPPC @ Vtable
+.fill (0x40 / 4), 4, STACKPIVOT_ADR @ Vtable
 #endif
 
 #if EXECHAX==0
