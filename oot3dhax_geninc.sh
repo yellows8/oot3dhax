@@ -15,8 +15,7 @@ printstr=`ropgadget_patternfinder $2 --baseaddr=0x100000 $OOT3D_SRV_PATTERNCMD "
 if [[ $? -eq 0 ]]; then
 	echo "$printstr"
 else
-	echo "//ERROR: srvinit_RegisterClient not found."
-	exit 1
+	echo "//WARNING: srvinit_RegisterClient not found."
 fi
 
 # Locate SRV_SESSIONHANDLE.
@@ -25,8 +24,7 @@ printstr=`ropgadget_patternfinder $2 --baseaddr=0x100000 $OOT3D_SRV_PATTERNCMD -
 if [[ $? -eq 0 ]]; then
 	echo "$printstr"
 else
-	echo "//ERROR: SRV_SESSIONHANDLE not found."
-	exit 1
+	echo "//WARNING: SRV_SESSIONHANDLE not found."
 fi
 
 # mov r4, r0. ptr = inr0, if(*ptr)svcCloseHandle(*ptr). *ptr = 0, r0 = ptr, "pop {r4, pc}".
@@ -35,8 +33,7 @@ printstr=`ropgadget_patternfinder $2 --baseaddr=0x100000 --patterntype=sha256 --
 if [[ $? -eq 0 ]]; then
 	echo "$printstr"
 else
-	echo "//ERROR: CLOSEHANDLE not found."
-	exit 1
+	echo "//WARNING: CLOSEHANDLE not found."
 fi
 
 # Stores r0 from "mrc 15, 0, r0, cr13, cr0, {3}" to r3+4, increments the word @ r3+8, r0=1 then pop {r4} bx	lr
@@ -45,8 +42,7 @@ printstr=`ropgadget_patternfinder $2 --baseaddr=0x100000 --patterntype=sha256 --
 if [[ $? -eq 0 ]]; then
 	echo "$printstr"
 else
-	echo "//ERROR: GETTHREADSTORAGE not found."
-	exit 1
+	echo "//WARNING: GETTHREADSTORAGE not found."
 fi
 
 # r4 = r0 + r1<<2. classptr = *(r5+0x38). Calls vtable funcptr +16 with r3 for the funcptr, r2=*r4, r1=<ptr loaded from pool>
@@ -55,8 +51,7 @@ printstr=`ropgadget_patternfinder $2 --baseaddr=0x100000 --patterntype=sha256 --
 if [[ $? -eq 0 ]]; then
 	echo "$printstr"
 else
-	echo "//ERROR: ADDSHIFTVAL_BLXR3 not found."
-	exit 1
+	echo "//WARNING: ADDSHIFTVAL_BLXR3 not found."
 fi
 
 # Locate THROWFATALERR.
@@ -65,14 +60,13 @@ printstr=`ropgadget_patternfinder $2 --baseaddr=0x100000 --patterntype=sha256 --
 if [[ $? -eq 0 ]]; then
 	echo "$printstr"
 else
-	echo "//ERROR: THROWFATALERR not found."
-	exit 1
+	echo "//WARNING: THROWFATALERR not found."
 fi
 
 echo ""
 
 # Locate ROPBUF, the savedata buffer.
-printstr=`ropgadget_patternfinder $2 --baseaddr=0x100000 --patterntype=sha256 --patterndata=375846c03e018e634226ebce1b010b5acf4d772d4ecccebb96092c3b5a03859e --patternsha256size=0x58 --dataload=0x180 "--plainout=#define ROPBUF "`
+printstr=`ropgadget_patternfinder $2 --baseaddr=0x100000 --patterntype=sha256 --patterndata=7958683afb59cb211a8ea7d5387195cb509ca2a32a1edb21e12a2eb8efded11b --patternsha256size=0x8 --dataload=0xfffffffc "--plainout=#define ROPBUF "`
 
 if [[ $? -eq 0 ]]; then
 	echo "$printstr"
