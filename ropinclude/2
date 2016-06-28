@@ -17,7 +17,6 @@
 #define MEMSET32_OTHER 0x00343280
 
 #define svcControlMemory 0x00301a0c
-#define svcCreateThread 0x004221a4
 #define svcSleepThread 0x004221c8
 
 #define GSPGPU_FlushDataCache 0x00453f64
@@ -31,6 +30,7 @@
 #define POP_R5R6PC 0x004aa754
 #define ROP_CMPR0R1 0x001002a0
 #define ROP_INITOBJARRAY 0x00350820
+#define svcCreateThread 0x004221a4
 #define svcConnectToPort 0x002fa7b8
 #define svcGetProcessId 0x0030794c
 #define THROWFATALERR_IPC 0x004360b0

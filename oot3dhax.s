@@ -68,6 +68,7 @@
 #define HEAPOFF_ARM9CODE 0x4
 #endif
 
+#ifdef ARM9HAX
 .macro SENDCMD HANDLE, CMDID, BUF
 CALLFUNC_NOSP GETTHREADSTORAGE, 0, 0, 0, ROPBUF+0x1040
 
@@ -103,6 +104,7 @@ ROP_SETR1 0x20
 COND_THROWFATALERR
 #endif
 .endm
+#endif
 
 _start:
 .word 0xbb, 0x01, 0x8000, 0xe0ba, 0x1, 0x57, 0x57
