@@ -39,6 +39,7 @@
 #define GXLOW_CMD4 0x00179f20
 #define GSP_SHAREDMEM_SETUPFRAMEBUF 0x004b1068
 //WARNING: FS_MountSdmc not found.
+#define FS_MountSavedata 0x00311778
 #define IFile_Open 0x003219e0
 #define IFile_Close 0x3218b8
 
