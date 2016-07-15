@@ -18,7 +18,7 @@ For details on the vuln/etc, see source and here: https://www.3dbrew.org/wiki/3D
 [11.0.0.33](https://www.3dbrew.org/wiki/11.0.0-33) is supported with the June 26, 2016, oot3dhax release builds.
 
 ### Building
-The built savefiles should be used with sploit_installer, but other savefile-writing tools could be used too.
+The built savefiles should be used with sploit_installer, but other savefile-writing tools could be used too. The built romfs data for sploit_installer is located at "finaloutput_romfs/".
 
 Make command: 
 "make EXECHAX={value} FWVER={value}"

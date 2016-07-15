@@ -8,6 +8,7 @@ endif
 
 SAVE_FILES	= oot3dhax_jpn.bin oot3dhax_usa.bin oot3dhax_eur.bin oot3dhax_kor.bin oot3dhax_chntwn.bin
 REGIONS		= jpn usa eur kor chntwn
+TITLEIDS	= 0004000000033400 0004000000033500 0004000000033600 000400000008f800 000400000008f900
 ELF_FILES	= $(SAVE_FILES:.bin=.elf)
 
 ## ======================
@@ -41,11 +42,13 @@ BIN_FLAGS	= -O binary
 ## ===================================================================
 
 all: requirements
-	$(MAKE) DREGION=$(word 1,$(subst :, ,$(REGIONS))) $(word 1,$(subst :, ,$(SAVE_FILES)))
-	$(MAKE) DREGION=$(word 2,$(subst :, ,$(REGIONS))) $(word 2,$(subst :, ,$(SAVE_FILES)))
-	$(MAKE) DREGION=$(word 3,$(subst :, ,$(REGIONS))) $(word 3,$(subst :, ,$(SAVE_FILES)))
-	$(MAKE) DREGION=$(word 4,$(subst :, ,$(REGIONS))) $(word 4,$(subst :, ,$(SAVE_FILES)))
-	$(MAKE) DREGION=$(word 5,$(subst :, ,$(REGIONS))) $(word 5,$(subst :, ,$(SAVE_FILES)))
+	@mkdir -p finaloutput_romfs/oot3dhax
+	@echo "oot3dhax OoT3D 0x4 0004000000033400 0004000000033500 0004000000033600 000400000008f800 000400000008f900" > finaloutput_romfs/exploitlist_config
+	$(MAKE) DREGION=$(word 1,$(subst :, ,$(REGIONS))) TID=$(word 1,$(subst :, ,$(TITLEIDS))) $(word 1,$(subst :, ,$(SAVE_FILES)))
+	$(MAKE) DREGION=$(word 2,$(subst :, ,$(REGIONS))) TID=$(word 2,$(subst :, ,$(TITLEIDS))) $(word 2,$(subst :, ,$(SAVE_FILES)))
+	$(MAKE) DREGION=$(word 3,$(subst :, ,$(REGIONS))) TID=$(word 3,$(subst :, ,$(TITLEIDS))) $(word 3,$(subst :, ,$(SAVE_FILES)))
+	$(MAKE) DREGION=$(word 4,$(subst :, ,$(REGIONS))) TID=$(word 4,$(subst :, ,$(TITLEIDS))) $(word 4,$(subst :, ,$(SAVE_FILES)))
+	$(MAKE) DREGION=$(word 5,$(subst :, ,$(REGIONS))) TID=$(word 5,$(subst :, ,$(TITLEIDS))) $(word 5,$(subst :, ,$(SAVE_FILES)))
 
 ## ======================
 ## Check requirements
@@ -71,6 +74,10 @@ include $(DEVKITARM)/base_rules
 %.bin: %.elf $(SAVETOOL_NAME)
 	$(OBJCOPY) $(BIN_FLAGS) $< $@
 	./$(SAVETOOL_NAME) $(SAVETOOL_OPT) $@
+	@mkdir -p finaloutput_romfs/oot3dhax/$(TID)/v1.0/common/save
+	@echo "[remaster_versions]\n0000=romfs:/oot3dhax/$(TID)/v1.0@v1.0" > finaloutput_romfs/oot3dhax/$(TID)/config.ini
+	@echo "save/$@=/save@!d2.bin" > finaloutput_romfs/oot3dhax/$(TID)/v1.0/common/config.ini
+	@cp $@ finaloutput_romfs/oot3dhax/$(TID)/v1.0/common/save/
 
 %.elf:
 	$(CC) $(ELF_FLAGS) $(ELF_SRCS) -o $@
