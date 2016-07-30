@@ -3,6 +3,8 @@ This is a 3DS savedata exploit for "The Legend of Zelda: Ocarina of Time 3D". He
 
 KOR and CHNTWN support is currently broken somehow.
 
+The Nintendo Selects versions of this game are supported.
+
 This savegame haxx is the same one referred to here: https://www.3dbrew.org/wiki/5.0.0-11  
 
 For details on the vuln/etc, see source and here: https://www.3dbrew.org/wiki/3DS_Userland_Flaws
@@ -36,7 +38,7 @@ Note that any EXECHAX type using arm9hax will fail to build the KOR + CHNTWN sav
 # Installation
 The recommended way to install oot3dhax is with either sploit_installer(https://github.com/smealum/sploit_installer), which is included with the homebrew starter-kit(https://smealum.github.io/3ds/), or by writing save-images with a gamecard save dongle for example.
 
-The release-archive saveimages don't include KOR and CHNTWN because newer save crypto is used with those regions' gamecard. Hence, you have to use sploit_installer to install oot3dhax for those regions(but currently there's no hosted \*hax payloads available for those regions, as of June 30, 2016).
+The release-archive saveimages doesn't include KOR and CHNTWN because newer save crypto is used with those regions' gamecard. Hence, you have to use sploit_installer to install oot3dhax for those regions(but currently there's no hosted \*hax payloads available for the CHNTWN regions, as of July 29, 2016).
 
 Raw save-images which can be written to the gamecard savedata flash are contained in the oot3dhax release-archive. The "saveimages" directory is for raw 0x20000-byte saveimages, while "saveimages_powersaves" is for Datel Powersaves. Those directories contain two sub-directories, each for a different cardid set. If you don't know what the cardids for your gamecard are(these are included with what are commonly called "gamecard-unique headers"), just try either directory until one of them works without the game triggering a savedata-corruption error at boot. These directories then contain sub-directories for each game region. The saveimage files under those region directories have the same filename as the payload contained in the savedata, you can use the filename from this to determine which saveimage filename to use: https://smealum.github.io/3ds/#otherapp
 
