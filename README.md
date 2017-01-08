@@ -10,11 +10,11 @@ This savegame haxx is the same one referred to here: https://www.3dbrew.org/wiki
 For details on the vuln/etc, see source and here: https://www.3dbrew.org/wiki/3DS_Userland_Flaws
 
 ### Haxx usage
-1. Goto the save-slot select screen
-2. Select haxx save-saveslot 
-3. Begin loading the save-slot
-4. Wait for the game to finish loading
-5. Press A, for triggering dialog handling.  
+1. Goto the save-slot select screen.
+2. Select haxx save-saveslot.
+3. Begin loading the save-slot.
+4. Wait for the game to finish loading.
+5. Without moving Link, press A for triggering dialog handling.  
 
 ### 11.0.0.33 support
 [11.0.0.33](https://www.3dbrew.org/wiki/11.0.0-33) is supported with the June 26, 2016, oot3dhax release builds.
