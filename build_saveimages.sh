@@ -56,7 +56,7 @@ build_region "jpn" "J" "c2"
 build_region "jpn" "J" "45"
 
 echo "Building for your own gamecard..."
-init_keyslots `cat accessdescsig_oot3dusa` "c2"
+init_keyslots `cat accessdescsig_oot3d$4` "c2"
 ./build_saveimage_clientcmds.sh $serverip $readbuf savedump_usergamecardoot3dhax.bin oot3dhax_$4.bin otherapp_payloads/otherapp/$5 | 3dshaxclient --serveradr=$serverip --shell=0
 
 3dshaxclient --serveradr=$serverip "--customcmd=writemem:9 $patchaddr 0xc @tmpcode.bin"
